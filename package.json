@@ -11,14 +11,18 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "check": "turbo run check && node scripts/check-boundaries.mjs",
+    "check": "turbo run check && node scripts/check-boundaries.mjs && node scripts/check-design.mjs",
     "verify": "pnpm run check && turbo run typecheck test build",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "test:live": "turbo run test:live"
+    "test:live": "turbo run test:live",
+    "check:design": "node scripts/check-design.mjs",
+    "check:design:self-test": "node scripts/check-design.mjs --self-test",
+    "design:tokens": "node scripts/design-tokens.mjs"
   },
   "devDependencies": {
     "turbo": "2.10.13",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "yaml": "^2.9.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
