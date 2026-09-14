@@ -102,6 +102,25 @@ const fail = (rule, criterion, detail) => problems.push(`${rule} (${criterion}):
   const SIDE_EFFECT = /(?:^|\n)\s*import\s+['"]([^'"]+)['"]/g;
   const DYNAMIC = /\b(?:import|require)\(\s*['"]([^'"]+)['"]\s*\)/g;
 
+  // What each package deliberately publishes, as specifiers a neighbour may
+  // write. The rule bans reaching into a package's internals, not the existence
+  // of a second front door: `@repo/ui/theme.css` is a stylesheet that has to be
+  // importable by name, and it is declared in that package's `exports` map. An
+  // undeclared subpath is still a failure, which is the part that matters.
+  const DECLARED_SUBPATHS = new Set();
+  for (const root of SEARCH_ROOTS) {
+    for (const entry of readdirSync(join(ROOT, root))) {
+      const dir = join(ROOT, root, entry);
+      if (!statSync(dir).isDirectory()) continue;
+      const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+      for (const subpath of Object.keys(manifest.exports ?? {})) {
+        if (subpath !== '.') {
+          DECLARED_SUBPATHS.add(`${manifest.name}/${subpath.replace(/^\.\//, '')}`);
+        }
+      }
+    }
+  }
+
   for (const file of files) {
     if (file.path.endsWith('.graphql')) continue;
     const packageRoot = file.path.split('/').slice(0, 2).join('/');
@@ -123,11 +142,12 @@ const fail = (rule, criterion, detail) => problems.push(`${rule} (${criterion}):
               'cross-package imports go through the package name',
           );
         }
-      } else if (/^@repo\/[^/]+\/.+/.test(specifier)) {
+      } else if (/^@repo\/[^/]+\/.+/.test(specifier) && !DECLARED_SUBPATHS.has(specifier)) {
         fail(
           'rule 3',
           'V-MW-7',
-          `${file.path} deep-imports "${specifier}"; every package exposes "." only`,
+          `${file.path} deep-imports "${specifier}", which its package does not declare ` +
+            'in `exports`; a package is reached through the entry points it publishes',
         );
       }
     }
@@ -278,9 +298,25 @@ const fail = (rule, criterion, detail) => problems.push(`${rule} (${criterion}):
     ['fetch(', 'a network call'],
     ['/api/', 'a route of the console'],
     ['container', 'product vocabulary — a primitive does not know what a container is'],
+    ['railway', 'the vendor this package must not have heard of'],
+    ['deployment', 'product vocabulary — a primitive renders a state, not a deployment'],
   ];
-  for (const file of files) {
-    if (!file.path.startsWith('packages/ui/src/')) continue;
+
+  // The package now ships a stylesheet, and a stylesheet can name the product
+  // just as easily as a component can — `@container`, or a comment citing the
+  // repository, whose own name carries two of the words above. `.css` is not a
+  // source extension for the other rules, so this one widens its own net rather
+  // than the shared list.
+  const UI_SOURCES = 'packages/ui/src';
+  const styled = readdirSync(join(ROOT, UI_SOURCES))
+    .filter((entry) => entry.endsWith('.css'))
+    .map((entry) => ({
+      path: `${UI_SOURCES}/${entry}`,
+      text: readFileSync(join(ROOT, UI_SOURCES, entry), 'utf8'),
+    }));
+
+  for (const file of [...files, ...styled]) {
+    if (!file.path.startsWith(`${UI_SOURCES}/`)) continue;
     const haystack = file.text.toLowerCase();
     for (const [needle, why] of FORBIDDEN) {
       if (haystack.includes(needle)) {

@@ -1,0 +1,98 @@
+/* Generated from DESIGN.md by scripts/design-tokens.mjs — do not edit. */
+/* Run `node scripts/design-tokens.mjs` after changing the specification. */
+
+@theme {
+  /* colours */
+  --color-ink: #111418;
+  --color-muted: #5b6672;
+  --color-line: #dfe3e8;
+  --color-line-strong: #7e8895;
+  --color-surface: #ffffff;
+  --color-raised: #f6f7f9;
+  --color-accent: #2f6feb;
+  --color-accent-hover: #2a63d4;
+  --color-accent-active: #2559bd;
+  --color-positive: #177245;
+  --color-caution: #8a5a00;
+  --color-danger: #b3261e;
+
+  /* type */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
+
+  /* measures */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-touch: 44px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
+
+  /* values a utility class cannot carry */
+  --border-hairline: 1px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --spinner-size-sm: 16px;
+  --spinner-size-md: 24px;
+  --spinner-stroke: 2px;
+
+  /* motion */
+  --animate-spin-arc: spin 0.9s linear infinite;
+}
+
+/* Written out rather than inherited, so the duration in DESIGN.md is the
+   duration on screen even if the CSS framework changes its own keyframes. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer components {
+  /* Geometry a utility name cannot express, driven by the variables above. */
+  .border-hairline {
+    border-width: var(--border-hairline);
+  }
+
+  .focus-ring:focus-visible {
+    outline: var(--focus-width) solid var(--color-accent);
+    outline-offset: var(--focus-offset);
+  }
+
+  .spinner-sm {
+    inline-size: var(--spinner-size-sm);
+    block-size: var(--spinner-size-sm);
+  }
+
+  .spinner-md {
+    inline-size: var(--spinner-size-md);
+    block-size: var(--spinner-size-md);
+  }
+
+  .spinner-stroke {
+    stroke-width: var(--spinner-stroke);
+  }
+
+  /* The animation rides on the element that actually turns, and the
+     reduced-motion override has to sit on that same element. Putting it
+     on the arc would look right and do nothing. */
+  .spin {
+    animation: var(--animate-spin-arc);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spin {
+      animation: none;
+    }
+  }
+}

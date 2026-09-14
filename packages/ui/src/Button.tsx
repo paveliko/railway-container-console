@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-import { colors, radius, space, typography } from './tokens';
+import { buttonBase, buttonVariant, type ButtonVariant } from './tokens';
 
-export type ButtonVariant = 'primary' | 'secondary';
+export type { ButtonVariant };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -14,31 +14,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * the whole point: the caller owns the label, the disabled state and the
  * handler, so the same component serves a screen this package has never heard
  * of.
+ *
+ * The two variants carry their own disabled treatment rather than sharing one.
+ * A shared rule reads as tidier and is wrong: dimming the whole control puts a
+ * primary label at 1.56:1, and applying the primary's dimmed fill to the
+ * secondary variant turns a white button blue. DESIGN.md §5 has the table.
  */
 export function Button({
   variant = 'secondary',
   children,
-  style,
+  className,
   type = 'button',
   ...rest
 }: ButtonProps) {
-  const primary = variant === 'primary';
+  const classes = [buttonBase, buttonVariant[variant], className].filter(Boolean).join(' ');
   return (
-    <button
-      type={type}
-      style={{
-        font: `${typography.weight.medium} ${typography.size.md} ${typography.family}`,
-        padding: `${space.sm} ${space.lg}`,
-        borderRadius: radius.sm,
-        border: `1px solid ${primary ? colors.accent : colors.line}`,
-        background: primary ? colors.accent : colors.surface,
-        color: primary ? colors.surface : colors.ink,
-        cursor: rest.disabled ? 'not-allowed' : 'pointer',
-        opacity: rest.disabled ? 0.55 : 1,
-        ...style,
-      }}
-      {...rest}
-    >
+    <button type={type} className={classes} {...rest}>
       {children}
     </button>
   );

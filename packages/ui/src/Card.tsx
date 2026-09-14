@@ -1,36 +1,27 @@
 import type { ReactNode } from 'react';
 
-import { colors, radius, space, typography } from './tokens';
+import { cardBase } from './tokens';
 
 export interface CardProps {
   title?: ReactNode;
   children: ReactNode;
 }
 
-/** A bordered box with an optional heading. No layout opinions beyond padding. */
+/**
+ * A bordered box with an optional heading. No layout opinions beyond padding
+ * and the rhythm DESIGN.md §3 fixes: 8px between lines that belong together.
+ *
+ * The border is decorative — it does not identify a control — so it stays
+ * `line` at 1.20:1 against the page behind it. That is recorded rather than
+ * hidden: `card/default/default/border` carries `identifying: false`.
+ */
 export function Card({ title, children }: CardProps) {
   return (
-    <section
-      style={{
-        background: colors.surface,
-        border: `1px solid ${colors.line}`,
-        borderRadius: radius.md,
-        padding: space.xl,
-        font: `${typography.weight.regular} ${typography.size.md} ${typography.family}`,
-        color: colors.ink,
-      }}
-    >
+    <section className={cardBase}>
       {title === undefined ? null : (
-        <h2
-          style={{
-            margin: `0 0 ${space.md}`,
-            font: `${typography.weight.bold} ${typography.size.lg} ${typography.family}`,
-          }}
-        >
-          {title}
-        </h2>
+        <h2 className="mt-0 mb-md font-sans text-lg font-bold text-ink">{title}</h2>
       )}
-      {children}
+      <div className="flex flex-col gap-sm">{children}</div>
     </section>
   );
 }
