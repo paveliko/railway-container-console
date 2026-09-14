@@ -1,0 +1,69 @@
+{"t":"2026-09-14T15:45:07.261Z","kind":"ack","data":{}}
+{"t":"2026-09-14T15:45:10.266Z","kind":"ACTION","data":"serviceInstanceDeployV2"}
+{"t":"2026-09-14T15:45:10.818Z","kind":"http","data":{"q":"mutation($s:String!,$e:String!){ service","body":{"data":{"serviceInstanceDeployV2":"534f564c-b2e1-4b83-8611-db149103d679"}}}}
+{"t":"2026-09-14T15:45:10.818Z","kind":"newDeploymentId","data":"534f564c-b2e1-4b83-8611-db149103d679"}
+{"t":"2026-09-14T15:45:12.767Z","kind":"ws","data":{"id":"new","type":"next","payload":{"data":{"deployment":{"id":"534f564c-b2e1-4b83-8611-db149103d679","status":"DEPLOYING","deploymentStopped":true,"instances":[]}}}}}
+{"t":"2026-09-14T15:45:13.909Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:13.910Z","kind":"poll-old","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:14.157Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"DEPLOYING","deploymentStopped":true,"instances":[{"status":"INITIALIZING"}]}}}}}
+{"t":"2026-09-14T15:45:14.158Z","kind":"poll-new","data":{"status":"DEPLOYING","deploymentStopped":true,"instances":[{"status":"INITIALIZING"}]}}
+{"t":"2026-09-14T15:45:20.969Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:20.970Z","kind":"poll-old","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:21.212Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"DEPLOYING","deploymentStopped":true,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:21.212Z","kind":"poll-new","data":{"status":"DEPLOYING","deploymentStopped":true,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:27.126Z","kind":"ws","data":{"id":"new","type":"next","payload":{"data":{"deployment":{"id":"534f564c-b2e1-4b83-8611-db149103d679","status":"SUCCESS","deploymentStopped":false,"instances":[{"id":"142714fe-97e2-4496-a6bd-3cb2827cd496","status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:27.980Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:27.980Z","kind":"poll-old","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:28.235Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:28.236Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:28.910Z","kind":"ws","data":{"id":"old","type":"next","payload":{"data":{"deployment":{"id":"2e83786c-cf0d-489b-b7d3-84bec70b4913","status":"REMOVING","deploymentStopped":true,"instances":[{"id":"07902bb3-2429-416b-99f3-acda0b1e7530","status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:30.842Z","kind":"ws","data":{"id":"old","type":"next","payload":{"data":{"deployment":{"id":"2e83786c-cf0d-489b-b7d3-84bec70b4913","status":"REMOVED","deploymentStopped":true,"instances":[{"id":"07902bb3-2429-416b-99f3-acda0b1e7530","status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:45:34.949Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:45:34.952Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:45:35.194Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:35.195Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:41.946Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:45:41.947Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:45:42.180Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:42.181Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:49.498Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:45:49.498Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:45:49.881Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:49.881Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:45:55.955Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:45:55.955Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:45:56.205Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:45:56.206Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:03.025Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:03.025Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:03.275Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:03.276Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:12.931Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:12.931Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:13.186Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:13.186Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:16.915Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:16.915Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:17.157Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:17.157Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:24.002Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:24.003Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:24.238Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:24.238Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:33.516Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:33.516Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:33.753Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:33.753Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:38.284Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:38.284Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:38.533Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:38.533Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:45.128Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:45.129Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:45.376Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:45.376Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:51.950Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}}}}
+{"t":"2026-09-14T15:46:51.951Z","kind":"poll-old","data":{"status":"REMOVED","deploymentStopped":true,"instances":[{"status":"REMOVED"}]}}
+{"t":"2026-09-14T15:46:52.190Z","kind":"http","data":{"q":"query($d:String!){ deployment(id:$d){ st","body":{"data":{"deployment":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}}}}
+{"t":"2026-09-14T15:46:52.190Z","kind":"poll-new","data":{"status":"SUCCESS","deploymentStopped":false,"instances":[{"status":"RUNNING"}]}}
+{"t":"2026-09-14T15:46:56.669Z","kind":"END","data":{}}

@@ -1,0 +1,1 @@
+{"errors":[{"message":"Error in numReplicas - Invalid input","locations":[{"line":1,"column":65}],"path":["serviceInstanceUpdate"],"extensions":{"code":"INTERNAL_SERVER_ERROR"},"traceId":"498867609512240188"}],"data":null}

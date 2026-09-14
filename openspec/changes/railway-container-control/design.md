@@ -14,7 +14,7 @@ client state.
 | `phase` | Headline | Detail line | Control | Control enabled |
 |---|---|---|---|---|
 | `down` | **Down** | `never deployed` / `stopped` / `removed` | **Start** | yes |
-| `starting` | **Starting…** | current `DeploymentEventStep`, humanised (*creating container*, *health check*) | *Starting…* | no |
+| `starting` | **Starting…** | the deployment's own status, humanised (*building*, *deploying*) — the finer `DeploymentEventStep` needs a subscription the project token cannot open | *Starting…* | no |
 | `up` | **Up** | deployment URL as a link, if any; `n replicas` if `n > 1` | **Stop** | yes |
 | `stopping` | **Stopping…** | — | *Stopping…* | no |
 | `failed` | **Failed** | `FAILED` / `CRASHED` | **Start** | yes |
@@ -50,7 +50,7 @@ Rules:
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │ browser (one page)                                                   │
-│   GET  /api/container/state           first paint                   │
+│   GET  /api/container/state           first paint                    │
 │   EventSource /api/container/events   SSE: ContainerState            │
 │   POST /api/container/up · /down                                     │
 └───────────────────────────────┬──────────────────────────────────────┘
@@ -59,21 +59,20 @@ Rules:
 │ app/api/container/*  (route handlers)   maps HTTP ⇄ container/       │
 ├──────────────────────────────────────────────────────────────────────┤
 │ container/                              domain verbs, one state type │
-│   actions.ts   up() · down() · watch() · inFlight()                  │
+│   actions.ts   up() · down() · inFlight()                            │
+│   poller.ts    watch() — 30 s idle, 2 s in flight   (D-API-7)        │
 │   state.ts     deriveContainerState(view) → ContainerState  (pure)   │
 ├──────────────────────────────────────────────────────────────────────┤
-│ railway/                                the only module that knows Railway
+│ railway/                            the only module that knows Railway
 │   credential.ts  Credential · headersFor() · fromEnv()               │
 │   transport.ts   execute(doc, vars)            HTTPS POST            │
-│   live.ts        subscribe(doc, vars)          WSS graphql-transport-ws
 │   errors.ts      RailwayError · classify(status, body)               │
 │   operations/    *.graphql, validated against the schema excerpt     │
 │   generated/     types from the excerpt                              │
 └───────────────────────────────┬──────────────────────────────────────┘
-                                │  Authorization: Bearer  |  Project-Access-Token
+                                │  Project-Access-Token                │
                                 ▼
                  https://backboard.railway.com/graphql/v2
-                 wss://backboard.railway.com/graphql/v2
 ```
 
 Rules the layering enforces (each is a line in `verification.md`):
@@ -104,8 +103,10 @@ RAILWAY_SERVICE_ID=
 CONSOLE_PASSPHRASE=                 # only if Q-SEC-4 says yes; absent = no gate
 ```
 
-The kind is declared, not inferred. The recommended kind is `project`
-(least privilege — operations research §1); `Q-API-4` and `Q-API-8` may move it.
+The kind is declared, not inferred. The recommended kind is `project` — least
+privilege, and verified to perform every HTTP operation the console needs
+(`Q-API-8`). It cannot open a subscription, which is one of the two reasons
+`D-API-7` polls instead.
 
 ## 4. Transport — `D-API-3`
 
@@ -134,35 +135,41 @@ present. Mutations are **never retried automatically** — they are not
 idempotent (operations research §6). The one-shot read may be retried once
 after `Retry-After`.
 
-## 5. Live state — `D-API-1`
+## 5. Keeping state current — `D-API-7`
 
 ```ts
-function subscribe<TData, TVars>(
-  doc: TypedDocument<TData, TVars>, vars: TVars,
-): AsyncIterable<TData>;             // one process-wide socket, multiplexed by graphql-ws id
+function pollOnce(): Promise<ContainerView>;          // one HTTP read
+function watch(): AsyncIterable<ContainerState>;      // the poller, derived and de-duplicated
 ```
 
-- Endpoint `wss://backboard.railway.com/graphql/v2`, subprotocol
-  `graphql-transport-ws`, over HTTP/1.1.
-- `connection_init.payload` carries the same header pair `headersFor()`
-  produces for HTTP. `[to-verify]` for project tokens — `Q-API-7`.
-- On any close, reconnect with exponential backoff (1 s → 30 s cap), then
-  perform **one** one-shot `ReadServiceInstance` to resync. That read is the
-  only HTTP request the steady state ever makes.
-- The browser never sees the socket. The server fans `ContainerState` out over
-  SSE; SSE reconnects for free and needs no token. A new SSE client gets the
-  current state as its first event, from memory, with no Railway request.
+**Polling, not subscriptions.** The experiment
+([`…/2026-09-14-experiment-stop-and-start.md`](../../_research/2026-09-14-experiment-stop-and-start.md))
+killed the subscription design twice over: a project token is refused at
+`subscribe`, and even with an account token the stream never reports a
+`deploymentStop`, because that changes only the instances and the stream fires
+on `status`.
 
-Request budget, on the observed 1 000/hour:
+| Situation | Interval | Requests |
+|---|---|---|
+| idle | 30 s | 120 / hour |
+| transition in flight | 2 s, until a terminal phase or 90 s | ~45 per press |
+| a browser connects, reconnects, or refreshes | — | 0 — served from the poller's last value |
 
-| Situation | HTTP requests to Railway |
-|---|---|
-| idle, socket open | 0 / hour |
-| socket reconnect | 1 |
-| `up` | 1 mutation (+ the subscription it opens) |
-| `down` | 1 read for the current deployment id + 1 mutation |
-| first paint, any number of browsers | 0 — served from the server's memory |
-| server cold start | 1 |
+One poller per process, whatever the number of viewers. The browser still
+never talks to Railway and still holds no state. Against the observed
+1 000 requests/hour the idle cost is 12 % and leaves room for ~19 presses an
+hour, which is more than a demo will ever see.
+
+Two properties the polling design keeps that the subscription would not:
+
+- it notices a change the console did not make — the dashboard, a crash,
+  serverless sleep — within 30 s, which is what `Q-UI-2` asks for;
+- it works with the least-privileged credential, which is what `D-API-2`
+  wants.
+
+The subscription is not deleted from the research; it is an extension (§12)
+with a documented reason for not being used, and three questions for Railway
+(`Q-API-7`).
 
 ## 6. State — `D-API-4`
 
@@ -200,23 +207,37 @@ pick may reshape (if "down" is `deploymentRemove`, rows 3 and 8–9 swap roles).
 | 5 | `QUEUED · WAITING · NEEDS_APPROVAL · BUILDING · DEPLOYING · INITIALIZING` | any | `starting` | observed enum |
 | 6 | `FAILED · CRASHED` | — | `failed` | observed enum |
 | 7 | `SLEEPING` | — | `sleeping` | observed enum |
-| 8 | `SUCCESS`, `deploymentStopped = true` | — | `down / stopped` | **to-verify** |
-| 9 | `SUCCESS` | all ∈ `{STOPPED, EXITED}` | `down / stopped` | **to-verify** |
+| 8 | `SUCCESS`, `deploymentStopped = true` | — | `down / stopped` | **observed** |
+| 9 | `SUCCESS` | all ∈ `{STOPPED, EXITED}` | `down / stopped` | **observed** (`EXITED`; `STOPPED` never seen) |
 | 10 | `SUCCESS` | any ∈ `{REMOVING}` | `stopping` | inferred |
 | 11 | `SUCCESS` | any ∈ `{CREATED, INITIALIZING, RESTARTING}` | `starting` | inferred |
-| 12 | `SUCCESS` | ≥ 1 `RUNNING`, none of the above | `up` | observed docs gloss |
+| 12 | `SUCCESS` | ≥ 1 `RUNNING`, none of the above | `up` | **observed** |
 | 13 | anything else | anything else | `unknown` with the literal values | — |
 
 Row 13 is the honesty clause from `D-UI-1`: a combination the table does not
 know is shown as such, not rounded to the nearest happy state.
 
+**The order is load-bearing, not cosmetic.** A deployment that has not started
+yet reads `deploymentStopped = true` with `instances = []` while
+`status = DEPLOYING` — observed. Rows 4–7 match on `status` first, so row 8
+never sees it. Reordering the table would make the console report a starting
+container as down. `V-37` verifies exactly this.
+
 ## 7. Verbs — `D-API-5` (recommendation; owner decides `Q-API-2`)
 
 ```ts
-function up():       Promise<{ deploymentId: string }>;   // serviceInstanceDeployV2 → id
+function up():       Promise<{ deploymentId: string }>;   // restart a stopped deployment, else deploy a new one
 function down():     Promise<void>;                        // read latestDeployment.id → <owner's verb>(id)
-function watch():    AsyncIterable<ContainerState>;        // subscribe(WatchDeployment) → derive
+function watch():    AsyncIterable<ContainerState>;        // the poller (§5) → derive
 function inFlight(): 'up' | 'down' | null;                 // set on accept, cleared on the next terminal state
+```
+
+`up()` in the recommended pair, verified live:
+
+```
+read latestDeployment
+  → exists and derives to `down / stopped`  →  deploymentRestart(id)      ~8 s, same id
+  → otherwise                               →  serviceInstanceDeployV2()  ~16 s, new id
 ```
 
 The bodies of `Up.graphql` and `Down.graphql` are the only things `Q-API-2`
@@ -226,13 +247,12 @@ owner picks — with one exception: candidate (c), delete/create, changes
 `RAILWAY_SERVICE_ID` from configuration to state, and is the reason it is the
 least recommended.
 
-If the owner picks candidate (d), `deploymentStop` ↔ `deploymentRestart`, then
-`up()` becomes *restart the latest deployment if it exists and is stopped, else
-deploy* — one branch, same signature — and `down()` is unchanged.
+`numReplicas: 0` is no longer a fallback — the API rejects `0`.
 
-`watch()` subscribes to `deployment(id)` for the latest deployment and, while
-`phase = starting`, also to `deploymentEvents(id)` so the UI can show the step
-rather than a spinner.
+`watch()` is the poller of §5. The `deploymentEvents` step that §1 shows while
+starting came from the subscription and is no longer available at 2 s
+granularity for a project token; the detail line falls back to the deployment's
+own `status` (*building*, *deploying*) unless `Q-API-7` says otherwise.
 
 `inFlight()` is the server-side guard behind `409`: set when a mutation is
 accepted, cleared when `watch()` yields a phase other than `starting` /
@@ -248,16 +268,15 @@ state, whatever it is, is shown.
 browser            server                           Railway
   │ POST /up          │                                │
   │──────────────────▶│ inFlight()? → 409              │
-  │                   │ execute(Up)                    │
-  │                   │───────────────────────────────▶│
-  │                   │◀── { serviceInstanceDeployV2: "dep_…" }
+  │                   │ read latestDeployment ────────▶│
+  │                   │ stopped ? deploymentRestart(id)│
+  │                   │         : deployV2()  ────────▶│
   │◀── 202 {deploymentId}   inFlight = 'up'            │
-  │                   │ subscribe(WatchDeployment, {id})
-  │                   │═══════════════════════════════▶│  (existing socket)
-  │                   │◀══ Deployment{status: BUILDING} │
+  │                   │ poller → 2 s                   │
+  │                   │──── read ─────────────────────▶│ DEPLOYING
   │◀── SSE starting   │                                │
-  │                   │◀══ Deployment{SUCCESS, instances:[RUNNING]}
-  │◀── SSE up         │  inFlight = null               │
+  │                   │──── read ─────────────────────▶│ SUCCESS / [RUNNING]
+  │◀── SSE up         │  inFlight = null, poller → 30 s│
 ```
 
 The HTTP response returns as soon as Railway has accepted the mutation. Nothing
@@ -285,8 +304,12 @@ tab B: POST /up → 409 transition-in-flight   (no Railway request)
 ### Change the console did not make
 
 ```
-Railway ══ Deployment{CRASHED} ══▶ server → derive → SSE failed → both tabs show Failed
+poller (≤30 s) ── read ──▶ Deployment{CRASHED} → derive → SSE failed → both tabs show Failed
 ```
+
+Detection is bounded by the idle interval: a change the console did not make
+appears within 30 seconds, not instantly. That is the price of `D-API-7`, and
+it is stated rather than hidden.
 
 ### Railway refuses
 
@@ -366,19 +389,37 @@ Railway project A "container-console"      Railway project B "console-target"
   `up` has a URL to show; it is not a product decision and can be swapped.
 - Nothing in project A can touch project A: the token is scoped to B.
 
+`[note]` The `Q-API-6` experiment ran inside a single project
+(`railway-container-console`, service `target`, still present and stopped),
+because that is what existed. The two-project split above is still the
+deployment topology; the experiment's service can become project B's target, or
+be deleted.
+
 ## 12. Minimum versus optional — the extension answers
 
-Built: §1–§11. Not built, listed for R-6 — a project/service picker (account
-token, `D-API-6` rejected it), Restart/Redeploy/Rollback, a logs pane on
-`deploymentLogs`, a passphrase or OAuth on the console, press history, choosing
-the image from the UI. Each is one route and one operation on the existing
-layers; that is the point of the layers.
+Built: §1–§11. Not built, listed for R-6:
+
+- **Live updates over the GraphQL subscription.** It exists and works — for an
+  account token, and only for `status` changes. Using it would mean a broader
+  credential *and* a hybrid with the poller anyway. The three questions it
+  raises are `Q-API-7`. This is the sharpest item to talk through, because the
+  reason for not using it was measured rather than assumed.
+- **`deploymentEvents` step detail** while starting — same credential problem.
+- A project / service picker (needs an account token; `D-API-6` rejected it).
+- Restart, Redeploy and Rollback as separate controls.
+- A logs pane on `deploymentLogs`.
+- A passphrase, or "Login with Railway" OAuth, on the console.
+- Press history — who pressed what, when.
+- Choosing the image from the UI.
+
+Each is one route and one operation on the existing layers; that is the point
+of the layers.
 
 ## 13. Testing surface
 
 Unit tests need no network: `classify`, `headersFor`, `fromEnv`,
-`deriveContainerState`, the `409` guard, and `subscribe` against a fake socket
-that replays the observed frames. Two integration tests need a token and are
-skipped without it: the `connection_ack` handshake and the zero-requests-while-idle
-count. The `Q-API-6` experiment is not a test; it is research, run once by the
-owner, and its output becomes fixtures for rows 8–12.
+`deriveContainerState`, the `409` guard, and the poller's cadence against a
+fake clock. The fixtures are real: `_research/experiment-2026-09-14/` holds the
+recorded frames, and rows 8–12 of §6 are tested against them. One integration
+test needs a token and is skipped without it: a single live read that returns a
+derivable `ContainerView`.

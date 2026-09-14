@@ -35,19 +35,20 @@ check with a stated procedure, and it passes or fails. `unit` needs no network;
 - V-19 `unit` — `inFlight()` clears when `watch()` yields a phase ∉ `{starting, stopping}`, and also clears after 120 s with no such phase.
 - V-20 `unit` — With `CONSOLE_PASSPHRASE` set, `POST /up` without the session cookie returns `401`; `GET /state` and `GET /events` still return `200`. With it unset, `POST /up` needs no cookie.
 
-## Live state
+## Keeping state current — `D-API-7`
 
-- V-21 `live` — `subscribe` opens `wss://backboard.railway.com/graphql/v2` with subprotocol `graphql-transport-ws`, sends `connection_init` whose payload carries the same header pair as V-1/V-2, and receives `connection_ack` within 5 s.
-- V-22 `unit` — Given a fake socket that closes with code 4408, `subscribe` reconnects; the delays are 1, 2, 4, 8, 16, 30, 30 … seconds (±jitter), never above 30.
-- V-23 `unit` — After each reconnect, exactly one `ReadServiceInstance` execute is issued, and the resulting `ContainerState` is emitted before any subscription frame.
-- V-24 `unit` — Two concurrent `subscribe` calls share one socket and are multiplexed by distinct graphql-ws `id`s; closing one does not close the other.
-- V-25 `live` — With the socket open and no user action, the count of HTTP requests to Railway over 10 minutes is 0.
-- V-26 `unit` — An SSE client that connects receives the current `ContainerState` as its first event, from memory, without a new Railway request; the same holds for a second client and for a client that reconnects.
+- V-21 `live` — One read with the project token returns a `ContainerView` that `deriveContainerState` maps to a phase without falling to row 13.
+- V-22 `unit` — With no transition in flight the poller issues one read per 30 s (fake clock, 10 simulated minutes → 20 reads, ±1).
+- V-23 `unit` — On an accepted mutation the poller switches to 2 s; on reaching a terminal phase it returns to 30 s; with no terminal phase it returns to 30 s after 90 s.
+- V-24 `unit` — Two identical consecutive reads produce **one** SSE event, not two: states are de-duplicated by value.
+- V-25 `unit` — A read that rejects with `network` or `rate-limited` leaves the last known state unchanged, emits no SSE event, and does not stop the poller; the next tick proceeds.
+- V-26 `unit` — An SSE client that connects receives the last known `ContainerState` as its first event, from memory, without a new Railway request; likewise a second client and a reconnecting client.
+- V-26a `unit` — The number of Railway reads is independent of the number of connected SSE clients (0, 1 and 5 clients → identical read counts).
 
 ## State derivation
 
 - V-27 `unit` — `{ hasEverDeployed: false, latestDeployment: null }` → `{ phase: 'down', reason: 'never-deployed' }`.
-- V-28 `unit` — `{ status: 'SUCCESS', deploymentStopped: true, instances: [{ status: 'STOPPED' }] }` → `{ phase: 'down', reason: 'stopped' }`.
+- V-28 `unit` — `{ status: 'SUCCESS', deploymentStopped: true, instances: [{ status: 'EXITED' }] }` → `{ phase: 'down', reason: 'stopped' }` — the shape actually observed after `deploymentStop`. Same for `STOPPED`, which the enum allows but the experiment never produced.
 - V-29 `unit` — `{ status: 'SUCCESS', deploymentStopped: false, instances: [{ status: 'RUNNING' }] }` → `{ phase: 'up', replicas: 1 }`.
 - V-30 `unit` — `{ status: 'SUCCESS', instances: [{ status: 'RUNNING' }, { status: 'RUNNING' }] }` → `replicas: 2`.
 - V-31 `unit` — `{ status: 'BUILDING' }` → `phase: 'starting'`; `DEPLOYING`, `INITIALIZING`, `QUEUED`, `WAITING`, `NEEDS_APPROVAL` likewise.
@@ -56,14 +57,14 @@ check with a stated procedure, and it passes or fails. `unit` needs no network;
 - V-34 `unit` — `{ status: 'REMOVING' }` → `'stopping'`; `{ status: 'REMOVED' }` → `{ phase: 'down', reason: 'removed' }`.
 - V-35 `unit` — Property test: for every `DeploymentStatus` × every multiset of up to 3 `DeploymentInstanceStatus` values × `deploymentStopped ∈ {true,false}`, `deriveContainerState` returns a value and never throws.
 - V-36 `unit` — Any combination not covered by rows 1–12 of the design table returns `phase: 'unknown'` whose `observed` string contains the literal status and every literal instance status.
-- V-37 `unit` — `deriveContainerState` never returns `phase: 'up'` when `deploymentStopped` is `true`, whatever the instances say.
-- V-38 `unit` — Fixtures recorded in the `Q-API-6` experiment (once it has run) derive to the phases the experiment log says the dashboard showed at the same moment; a fixture that disagrees fails the test, not the fixture.
+- V-37 `unit` — `deriveContainerState` never returns `phase: 'up'` when `deploymentStopped` is `true`, whatever the instances say; **and** `{ status: 'DEPLOYING', deploymentStopped: true, instances: [] }` — what a not-yet-started deployment really reports — returns `phase: 'starting'`, not `down`. Ordering regression test.
+- V-38 `unit` — Every frame in `_research/experiment-2026-09-14/*.jsonl` derives to the phase the experiment log records for that moment: `SUCCESS`/`stopped=true`/`[EXITED]` → `down / stopped`; `SUCCESS`/`stopped=false`/`[RUNNING]` → `up`; `DEPLOYING`/`stopped=true`/`[]` → `starting`; `REMOVED`/`[REMOVED]` → `down / removed`.
 
 ## Operations documents
 
 - V-39 `build` — Every document under `railway/operations/` validates against `_research/railway-schema-excerpt.graphql`; a document using a field not in the excerpt fails the build.
 - V-40 `build` — A `.graphql` file containing `mutation` is imported only from `container/actions.ts`; any other importer fails the build (lint rule or grep).
-- V-41 `build` — The host `backboard.railway.com` appears in exactly one source file, `railway/transport.ts`, and once in the `wss://` form in `railway/live.ts`.
+- V-41 `build` — The host `backboard.railway.com` appears in exactly one source file, `railway/transport.ts`. No `wss://` URL appears in the source at all (`D-API-7` removed the socket).
 
 ## UI — *(R-4)*
 
@@ -92,9 +93,15 @@ check with a stated procedure, and it passes or fails. `unit` needs no network;
 - V-58 `manual` — Every `Q-<CAP>-N` owned by **Railway** has been sent to Railway before the interview, and `open-questions.md` records the date sent and any answer.
 - V-59 `manual` — The walkthrough script (`tasks.md` T-8.3) demonstrates, in order: state on load → Start → steps → Up with URL → second-tab 409 → Stop → Down → refresh; and names three extensions from design §12.
 
+## Settled before this change, by the `Q-API-6` experiment
+
+`deploymentStop` leaves `SUCCESS` / `stopped=true` / `[EXITED]` (the V-38
+fixtures) · `deploymentRestart` revives a stopped deployment, same id, ~8 s ·
+a project token performs every mutation the console needs but cannot subscribe ·
+`numReplicas: 0` is rejected.
+
 ## Not verified by this change
 
-- What a live `deploymentStop` (or the owner's chosen verb) looks like through the subscription — `Q-API-6`, research, run by the owner; produces the fixtures for V-38.
-- Whether a project token authenticates over the socket and may call the needed mutations — `Q-API-7`, `Q-API-8`.
-- Whether `numReplicas: 0` is accepted — `Q-API-5`.
-- Whether a stopped deployment is billed — `Q-OPS-2`.
+- Whether `deploymentRestart` still works after a long stop — `Q-API-9`. The up path falls back to `serviceInstanceDeployV2`, so this is a quality question, not a correctness one.
+- Whether a stopped deployment is billed — `Q-OPS-2`; read the usage page.
+- Whether Railway intends the subscription limits observed — `Q-API-7`.

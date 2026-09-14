@@ -28,31 +28,38 @@ code and written down so they can be argued with.
 4. [`openspec/open-questions.md`](openspec/open-questions.md)
    — everything still unresolved, including five questions for Railway.
 
-**Four things the research found by probing the live API, not by reading about it**
-(details in [`openspec/_research/2026-09-14-railway-graphql-surface.md`](openspec/_research/2026-09-14-railway-graphql-surface.md)):
+**Five things found by probing the live API and then running a real container
+up and down** — not by reading about it. Sources:
+[the API surface](openspec/_research/2026-09-14-railway-graphql-surface.md) and
+[the experiment](openspec/_research/2026-09-14-experiment-stop-and-start.md),
+with raw frames in [`experiment-2026-09-14/`](openspec/_research/experiment-2026-09-14/).
 
 | Finding | Consequence |
 |---|---|
 | CORS on `backboard.railway.com` is pinned to `https://railway.com` | the browser cannot call the API; a server side is forced, not chosen |
-| "Not Authorized" arrives as **HTTP 200** with `extensions.code: INTERNAL_SERVER_ERROR` | errors are classified from the body, never from the status |
-| GraphQL **subscriptions work** over `graphql-transport-ws` — undocumented | no polling; zero requests to Railway while idle |
-| `DeploymentStatus` has **no `STOPPED`**; a stopped deployment stays `SUCCESS` and reports the stop through its instances | "is it up" is read from the replicas, not the deployment — the UI never lies |
+| "Not Authorized" — and plain input validation — arrive as **HTTP 200** with `extensions.code: INTERNAL_SERVER_ERROR` | errors are classified from the body, never from the status |
+| After a real `deploymentStop` the deployment still reads **`status: SUCCESS`**; the stop appears only in `deploymentStopped` and in the instances (`EXITED`) | "is it up" is read from the replicas, not the deployment — the UI never lies |
+| Subscriptions exist and work, but a **project token is refused at `subscribe`**, and a stop never reaches a subscriber at all — the stream fires on `status`, and a stop does not change it | the console polls on a bounded schedule instead: 30 s idle, 2 s in flight |
+| `deploymentRestart` **revives a stopped deployment** in ~8 s, same deployment id — though the docs describe it as being for *running* ones | "down" and "up" can be the same deployment, so the UI may honestly say the same container came back |
 
 And one thing found on Railway's own support forum: users have asked for a
 "pause" button since 2022 and are told to *remove the deployment*; their
-follow-up questions — will data survive, is it billed — go unanswered. That is
-the product this console is
+follow-up questions — will data survive, is it billed — go unanswered. The
+Railway dashboard has no Stop button; the API has one. That is the product this
+console is
 ([`…/2026-09-14-railway-customers-and-users.md`](openspec/_research/2026-09-14-railway-customers-and-users.md) §4).
 
 **What the console will be:** one screen; one configured service; a control
 that reads *Start* or *Stop* according to the state Railway actually reports;
-the deployment step shown while starting; a second press refused server-side;
-a refresh that loses nothing. Next.js as one Node process, holding one
-subscription socket and fanning state out over SSE. Token on the server only.
+the deployment's status shown while starting; a second press refused
+server-side; a refresh that loses nothing. Next.js as one Node process, holding
+one poller and fanning state out to every browser over SSE. A project token, on
+the server only.
 Specified in
 [`design.md`](openspec/changes/railway-container-control/design.md) and
-checkable against 59 criteria in
-[`verification.md`](openspec/changes/railway-container-control/verification.md).
+checkable against 60 criteria in
+[`verification.md`](openspec/changes/railway-container-control/verification.md),
+many of them against the experiment's real recorded frames.
 
 ---
 
@@ -62,20 +69,25 @@ Ordered. Nothing below the line starts before the line is crossed.
 
 **Decide (owner only — agents prepare, the owner signs):**
 
-- [ ] **What "down" does.** Five candidates, different consequences —
-      `deploymentStop`, `deploymentRemove`, `deploymentStop`+`deploymentRestart`,
-      `numReplicas: 0`, `serviceDelete`. Table in
-      [`operations-and-cost.md` §2](openspec/_research/2026-09-14-railway-operations-and-cost.md);
-      recommendation in `D-API-5`. Close `Q-API-2`.
-- [ ] **Sign or amend** the eleven `proposed` decisions in
+- [ ] **What "down" does.** Four candidates left — `deploymentStop`+`deploymentRestart`
+      (**recommended, verified live**), `deploymentStop`+`deployV2`,
+      `deploymentRemove`+redeploy, `serviceDelete`+`serviceCreate`.
+      `numReplicas: 0` is out: the API rejects it. Consequences tabled in
+      [`operations-and-cost.md` §2](openspec/_research/2026-09-14-railway-operations-and-cost.md),
+      measured in [the experiment](openspec/_research/2026-09-14-experiment-stop-and-start.md).
+      Close `Q-API-2`.
+- [ ] **Sign or amend** the `proposed` decisions in
       [`decisions.md`](openspec/decisions.md) — stack (`D-UI-2`), topology
-      (`D-OPS-1`), primary user (`D-UI-4`), and the rest.
+      (`D-OPS-1`), primary user (`D-UI-4`), polling over subscriptions
+      (`D-API-7`, which supersedes `D-API-1`), and the rest.
 - [ ] **Demo passphrase or not** — `Q-SEC-4`.
 
-**Ask Railway** (the posting says to — `R-7`): `Q-API-4` token type,
-`Q-API-7` are subscriptions supported, `Q-SEC-2` whose token in the demo,
-`Q-SEC-3` how to detect an auth failure, `Q-OPS-2` is a stopped deployment
-billed. Record the date sent in `open-questions.md`.
+**Ask Railway** (the posting says to — `R-7`): `Q-API-4` token type;
+`Q-API-7` — is a project token meant to be unable to subscribe, is a
+`deploymentStop` meant to be invisible to a subscriber, is `connection_ack`
+meant to carry no auth signal; `Q-SEC-2` whose token in the demo; `Q-SEC-3`
+how to detect an auth failure; `Q-OPS-2` is a stopped deployment billed.
+Record the date sent in `open-questions.md`.
 
 **Verify by looking** (the dashboard, no API): is there a *Stop* action or
 only *Remove*; what the *Remove* dialog warns about; can replicas be set to 0;
@@ -83,19 +95,21 @@ what the customers page actually says. Update the `[to-verify]` marks.
 
 ---
 
-- [ ] **Set a usage limit** on the Railway account; create the target project
-      and a project token — into `.env` only. (`tasks.md` T-2.3)
-- [ ] **Run the experiment** — deploy a tiny image once, apply the chosen
-      "down", watch the `deployment` subscription, record the frames as
-      fixtures. This is the one step that starts and stops a real container.
-      (`Q-API-6`, T-3.4)
+- [ ] **Set a usage limit** on the Railway account — the one thing from T-2.3
+      that is still missing. The project and the project token exist
+      (`.env.local`, git-ignored).
+- [x] ~~**Run the experiment**~~ — done 2026-09-14: a real `nginx:alpine`
+      container was started, stopped, restarted and stopped again, with every
+      frame recorded. The service is left **stopped**.
+- [ ] **Read the usage page** a day later and close `Q-OPS-2` — is a stopped
+      deployment billed? (T-3.5)
 - [ ] **Then build**, in the order of
       [`tasks.md`](openspec/changes/railway-container-control/tasks.md):
-      scaffold → transport and errors → subscription client → state derivation
-      → verbs → routes → the screen → tests → deploy → README and walkthrough.
+      scaffold → transport and errors → poller → state derivation → verbs →
+      routes → the screen → tests → deploy → README and walkthrough.
 
 Tasks that need none of the above and can start today: T-2.1, T-2.2, T-3.1,
-T-3.2, T-4.1, T-5.1, T-5.2.
+T-3.2, T-4.1, T-4.3, T-5.1, T-5.2 and T-6.1 — the fixtures it needed now exist.
 
 ---
 
@@ -108,7 +122,7 @@ openspec/
 │   └── railway-container-control/
 │       ├── proposal.md      problem, scenario, scope, what is left out
 │       ├── design.md        UI states, layers, state derivation, sequences, stack, topology
-│       ├── verification.md  59 falsifiable acceptance criteria (V-N)
+│       ├── verification.md  60 falsifiable acceptance criteria (V-N)
 │       └── tasks.md         ordered tasks — result, dependencies, acceptance, how verified
 ├── current/           what the console *is* — empty until the change is implemented and archived
 ├── decisions.md       D-<CAP>-N, each with its rejected alternatives; proposed until the owner signs
@@ -121,7 +135,7 @@ are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Running it
 
-There is nothing to run yet. When there is: copy `.env.example` to `.env`,
+There is nothing to run yet. When there is: copy `.env.example` to `.env.local`,
 fill in the five `RAILWAY_*` variables (names in
 [`design.md` §3](openspec/changes/railway-container-control/design.md)),
 `npm install`, `npm run dev`. The token never leaves the server and never

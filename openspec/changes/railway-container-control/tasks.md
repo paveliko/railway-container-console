@@ -1,8 +1,8 @@
 # Tasks: `railway-container-control`
 
 Ordered. A task is checked only when its **Result** exists and its
-**Acceptance** has been run. Research tasks are checked because their result is
-in `_research/`; nothing in T-1 onwards has been started. `V-N` refers to
+**Acceptance** has been run. T-0 and T-3.4 are checked because their results
+are in `_research/`; no implementation task has been started. `V-N` refers to
 [`verification.md`](verification.md); `R-N` / `A-N` to the brief's requirement
 register; `Q-`/`D-` to the registers at the repository root.
 
@@ -17,12 +17,12 @@ Legend: `[x]` done · `[ ]` not started · `[~]` blocked, on whom is stated.
 - [x] **T-0.3 The API, from the docs.** Result: `_research/2026-09-14-railway-public-api.md`.
 - [x] **T-0.4 The API, live.** Result: `_research/2026-09-14-railway-graphql-surface.md` + `railway-schema-excerpt.graphql`. Read-only probes only: introspection, CORS preflight, error shapes, websocket handshake to `connection_ack`. No resource created, no service touched.
 - [x] **T-0.5 Tokens, dashboard verbs, cost, retries.** Result: `_research/2026-09-14-railway-operations-and-cost.md`.
-- [x] **T-0.6 Specification.** Result: this folder; `decisions.md` D-API-1…6, D-UI-1…3, D-SEC-1, D-OPS-1 (all *proposed*); `open-questions.md` Q-API-1…8, Q-UI-1…2, Q-SEC-1…4, Q-OPS-1…2.
+- [x] **T-0.6 Specification.** Result: this folder; `decisions.md` D-API-1…7, D-UI-1…4, D-SEC-1, D-OPS-1 (all *proposed*; `D-API-1` superseded by `D-API-7`); `open-questions.md` Q-API-1…9, Q-UI-1…4, Q-SEC-1…4, Q-OPS-1…2.
 
 ## T-1 · Owner decisions and questions to Railway — blocked on the owner
 
-- [~] **T-1.1 Decide what "down" does.** *Owner.* Result: `Q-API-2` closed with a pick among `deploymentStop` / `deploymentRemove` / `numReplicas: 0` / `serviceDelete`; `D-API-5` re-stated with the pick and moved to `ratified` (or superseded). Depends on: nothing — the consequences are tabled in operations research §2. Acceptance: `open-questions.md` shows Q-API-2 resolved; `decisions.md` shows one ratified verb pair. Verified by: reading the two registers.
-- [~] **T-1.2 Sign or amend `D-UI-2` (stack), `D-OPS-1` (topology), `D-UI-3` (UI rules), `D-SEC-1`, `D-API-1…4, 6`.** *Owner.* Result: statuses moved from `proposed`. Acceptance: no decision that T-3+ depends on is still `proposed`. Verified by: `grep -c proposed openspec/decisions.md` equals the number of decisions deliberately left open.
+- [~] **T-1.1 Decide what "down" does.** *Owner.* Result: `Q-API-2` closed with a pick among `deploymentStop`+`deploymentRestart` (recommended, verified live), `deploymentStop`+`deployV2`, `deploymentRemove`+redeploy, or `serviceDelete`+`serviceCreate`. `numReplicas: 0` is no longer a candidate — the API rejects it. `D-API-5` re-stated with the pick and moved to `ratified`. Depends on: nothing — the consequences are tabled in operations research §2 and measured in the experiment. Acceptance: `open-questions.md` shows `Q-API-2` resolved; `decisions.md` shows one ratified verb pair. Verified by: reading the two registers.
+- [~] **T-1.2 Sign or amend `D-UI-2` (stack), `D-OPS-1` (topology), `D-UI-3` (UI rules), `D-UI-4` (primary user), `D-SEC-1`, `D-API-2…7`.** *Owner.* Result: statuses moved from `proposed`. Acceptance: no decision that T-3+ depends on is still `proposed`. Verified by: `grep -c proposed openspec/decisions.md` equals the number of decisions deliberately left open.
 - [~] **T-1.3 Send the Railway-owned questions.** *Owner.* Result: `Q-API-4`, `Q-API-7`, `Q-SEC-2`, `Q-SEC-3`, `Q-OPS-2` sent; date recorded in `open-questions.md`; answers appended as they arrive. Depends on: nothing. Acceptance: V-58. Verified by: the register.
 - [~] **T-1.4 Answer `Q-SEC-4` (demo passphrase).** *Owner.* Result: `Q-SEC-4` resolved by a `D-SEC-2`. Default if unanswered: no gate; `CONSOLE_PASSPHRASE` stays an optional variable.
 
@@ -30,20 +30,21 @@ Legend: `[x]` done · `[ ]` not started · `[~]` blocked, on whom is stated.
 
 - [ ] **T-2.1 Scaffold.** Result: Next.js + TypeScript app at the repository root per design §10 (`app/`, `src/railway/`, `src/container/`, `lib/runtime.ts`), `vitest` wired, `.env.example` with the six names from design §3 and no values, `README.md` extended with "run locally". Depends on: T-1.2 (`D-UI-2`). Acceptance: `npm run build` and `npm test` pass on a clean clone with an empty test; `git grep -c 'RAILWAY_TOKEN=' .env.example` = 1 and the value is empty. Verified by: CI run on the branch.
 - [ ] **T-2.2 Schema excerpt as a build input.** Result: codegen from `openspec/_research/railway-schema-excerpt.graphql` into `src/railway/generated/`; a build step that validates every `src/railway/operations/*.graphql` against it. Depends on: T-2.1. Acceptance: V-39 — add a document with a bogus field, build fails; remove it, build passes. Verified by: the two build runs, logged in the PR.
-- [ ] **T-2.3 Account safety.** Result: usage limit set on the Railway account; the target project B created empty (no service yet); a project token for B/production created and stored only in the local `.env` and, later, in project A's variables. Depends on: T-1.1 (if the pick is `serviceDelete`/`serviceCreate`, the token needs project scope for creation — confirm in T-3.4). Acceptance: V-56; `git status` shows no `.env`. Verified by: screenshot of the usage page in the PR; `git ls-files | grep -c '^\.env$'` = 0. *Creates a paid-capable resource: the owner does this, not an agent.*
+- [~] **T-2.3 Account safety.** *Partly done.* Project `railway-container-console` and a project token for its `production` environment exist; the token lives in `.env.local`, which is git-ignored and untracked. **Still to do: set the account usage limit** — it was not set before the experiment, and it should be set before anything is deployed. Depends on: nothing. Acceptance: V-56; `git ls-files | grep -c '^\.env'` = 0. Verified by: the usage page. *The owner sets the limit, not an agent.*
 
 ## T-3 · API integration, verified
 
 - [ ] **T-3.1 Credential + transport + errors.** Result: `credential.ts`, `transport.ts`, `errors.ts` per design §3–§4, with fixtures copied from the observed responses in surface research §3. Depends on: T-2.2. Acceptance: V-1…V-12. Verified by: `npm test`.
-- [ ] **T-3.2 Live subscription client.** Result: `live.ts` per design §5, against a fake socket replaying the observed frames (`connection_ack`, 4408 close). Depends on: T-3.1. Acceptance: V-22, V-23, V-24, V-26. Verified by: `npm test`.
-- [ ] **T-3.3 Live handshake check.** Result: a test tagged `live` that runs V-21 with the project token from `.env` and is skipped without one. Depends on: T-3.2, T-2.3. Acceptance: V-21 passes locally with the token; the CI run without a token reports it as skipped, not failed. Verified by: both runs logged. *Read-only against Railway; no resource created.*
-- [ ] **T-3.4 The `Q-API-6` experiment.** *Owner runs; agent prepares the script.* Result: a script that, with the project token, deploys the target image into project B once, records every `deployment` and `deploymentEvents` frame to a file, applies the owner's "down" verb, records again, applies "up" again, records again, then leaves the target **down**; the recorded frames are committed as fixtures under `src/container/__fixtures__/` with timestamps and the dashboard's status at each step noted by hand. Depends on: T-1.1, T-2.3, T-3.2. Acceptance: the fixtures exist; rows 8–12 of design §6 are re-marked from `to-verify` to `observed` or corrected; `Q-API-6`, `Q-API-8` and, if the verb is `numReplicas`, `Q-API-5` are resolved in the register; `Q-OPS-2` gets a note from the usage page 24 h later. Verified by: V-38 passes against the fixtures. *This is the one task that starts and stops a real container and spends money. It is not run by an agent, and it is not run before T-1.1.*
+- [ ] **T-3.2 Poller.** Result: `container/poller.ts` per design §5 — 30 s idle, 2 s in flight, de-duplicated by value, survives a failed read. Against a fake clock and a fake transport. Depends on: T-3.1, T-4.1. Acceptance: V-22…V-26a. Verified by: `npm test`.
+- [ ] **T-3.3 Live read check.** Result: a test tagged `live` that runs V-21 with the project token from `.env.local` and is skipped without one. Depends on: T-3.2, T-2.3. Acceptance: V-21 passes locally with the token; the CI run without a token reports it as skipped, not failed. Verified by: both runs logged. *Read-only against Railway; no resource created.*
+- [x] **T-3.4 The `Q-API-6` experiment.** **Done 2026-09-14**, with the owner's authorisation and their project token, against service `target` (`nginx:alpine`) in project `railway-container-console`. Result: [`_research/2026-09-14-experiment-stop-and-start.md`](../../_research/2026-09-14-experiment-stop-and-start.md), raw frames in `_research/experiment-2026-09-14/`. Closed `Q-API-5` (negative), `Q-API-6`, `Q-API-8`; superseded `D-API-1` with `D-API-7`; revised `D-API-5`; opened `Q-API-9`. The service was left **stopped**. Acceptance: rows 8, 9 and 12 of design §6 moved from `to-verify` to `observed`; V-38 names concrete fixtures. Verified by: the fixtures in the repository.
+- [ ] **T-3.5 Close `Q-OPS-2`.** Result: read the Railway usage page ≥ 24 h after the experiment and record whether the stopped deployment was billed. Depends on: T-3.4. Acceptance: `Q-OPS-2` closed, or escalated to Railway with what was seen. Verified by: the register.
 
 ## T-4 · Server-side operations
 
 - [ ] **T-4.1 State derivation.** Result: `state.ts` per design §6, table rows as named test cases. Depends on: T-2.2 (enum types). Acceptance: V-27…V-37. Verified by: `npm test`. Can start before T-3.4; V-38 is added after it.
 - [ ] **T-4.2 Verbs and the in-flight guard.** Result: `actions.ts` — `up()`, `down()`, `watch()`, `inFlight()`; `Up.graphql` and `Down.graphql` with the owner's verb. Depends on: T-1.1, T-3.1, T-3.2, T-4.1. Acceptance: V-12, V-18, V-19, V-40. Verified by: `npm test` + build.
-- [ ] **T-4.3 Runtime singleton.** Result: `lib/runtime.ts` — one socket, current state in memory, resync-on-reconnect, SSE fan-out. Depends on: T-4.2. Acceptance: V-23, V-26. Verified by: `npm test`.
+- [ ] **T-4.3 Runtime singleton.** Result: `lib/runtime.ts` — one poller per process, last known state in memory, SSE fan-out, `inFlight` held here. Depends on: T-4.2. Acceptance: V-23, V-26, V-26a. Verified by: `npm test`.
 - [ ] **T-4.4 Route handlers.** Result: the four routes from design §9 with the single error shape, Node runtime declared; passphrase gate if T-1.4 says so. Depends on: T-4.3. Acceptance: V-13, V-14, V-17, V-18, V-20, V-41. Verified by: `npm test` + build.
 
 ## T-5 · Interface
@@ -53,9 +54,9 @@ Legend: `[x]` done · `[ ]` not started · `[~]` blocked, on whom is stated.
 
 ## T-6 · Errors, states, edge cases — end to end
 
-- [ ] **T-6.1 Against a fake Railway.** Result: an in-process fake that serves the recorded fixtures over HTTP and a fake socket; an end-to-end test that drives Start → steps → Up → second press → Stop → Down → refresh. Depends on: T-3.4 (fixtures), T-5.1. Acceptance: V-16 (request log shows only the console's origin), V-47, V-48. Verified by: `npm test`.
-- [ ] **T-6.2 Failure paths.** Result: the same harness with the fake returning not-authorized, 429, and a dropped socket. Depends on: T-6.1. Acceptance: V-45, V-46, V-22 observed end to end. Verified by: `npm test`.
-- [ ] **T-6.3 Idle budget.** Result: a `live` test that holds the socket for 10 minutes and counts requests. Depends on: T-4.3, T-2.3. Acceptance: V-25. Verified by: one logged run with the token. *Read-only.*
+- [ ] **T-6.1 Against a fake Railway.** Result: an in-process fake that replays `_research/experiment-2026-09-14/*.jsonl` over HTTP; an end-to-end test that drives Start → starting → Up → second press → Stop → Down → refresh. Depends on: T-5.1 — **the fixtures already exist** (T-3.4). Acceptance: V-16 (request log shows only the console's origin), V-47, V-48. Verified by: `npm test`.
+- [ ] **T-6.2 Failure paths.** Result: the same harness with the fake returning not-authorized, 429, `"Error in numReplicas - Invalid input"`, and a dropped connection. Depends on: T-6.1. Acceptance: V-45, V-46, V-25 observed end to end. Verified by: `npm test`.
+- [ ] **T-6.3 Idle budget.** Result: a `live` test that runs the poller for 10 minutes against Railway and counts requests — expect 20, ±1. Depends on: T-4.3, T-2.3. Acceptance: V-22 against the real endpoint. Verified by: one logged run with the token. *Read-only.*
 
 ## T-7 · Deployment on Railway — *(R-5)*
 
@@ -74,12 +75,15 @@ Legend: `[x]` done · `[ ]` not started · `[~]` blocked, on whom is stated.
 
 ## Ready to start now, without waiting on anyone
 
-T-2.1, T-2.2, T-3.1, T-3.2, T-4.1, T-5.1 (against a fake), T-5.2 — everything
-that does not touch the two verb bodies or a real Railway resource. T-2.1
-assumes `D-UI-2` as proposed; if the owner changes the stack, T-2.1 is redone
-and nothing else is.
+T-2.1, T-2.2, T-3.1, T-3.2, T-4.1, T-4.3, T-5.1 (against a fake), T-5.2 and
+T-6.1 — the fixtures T-6.1 was waiting on now exist. Everything except the two
+verb bodies and anything that touches a real Railway resource. T-2.1 assumes
+`D-UI-2` as proposed; if the owner changes the stack, T-2.1 is redone and
+nothing else is.
 
 ## Cannot start until the owner acts
 
-T-1.\*, T-2.3, T-3.4, T-4.2 (the verb bodies), T-6.1 (needs T-3.4's fixtures),
-T-7.\*.
+T-1.\* (the decisions, and the questions to Railway), T-4.2 (the verb bodies —
+they need `Q-API-2` signed), T-7.\* (deployment). T-2.3 is **partly done**: the
+project and the project token exist; the **account usage limit has not been
+set**, and it should be before anything else is deployed.
