@@ -1,0 +1,3 @@
+# Proposal: `probe`
+
+A fixture.

@@ -1,0 +1,8 @@
+{
+  "problems": [
+    {
+      "rule": "R-STRUCT",
+      "id": "probe"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "problems": [
+    {
+      "rule": "R-STRUCT",
+      "id": "D-API-1"
+    }
+  ]
+}
