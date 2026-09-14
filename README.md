@@ -5,9 +5,12 @@ Railway's public GraphQL API — built for Railway's take-home for the
 *Senior Full-Stack Engineer - Product* role.
 
 **Status:** research and specification are done, and the client layer is built
-and tested against the live API. The screen and the two mutations are not:
-what "spin down" should mean is a decision with consequences, and it is left to
-a person, not an agent — see *Next steps*.
+and tested against the live API, as one application. The next step is to make
+its layers real packages — a pnpm workspace with Turborepo, specified in
+[`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/)
+and waiting on a signature. The screen and the two mutations come after: what
+"spin down" should mean is a decision with consequences, and it is left to a
+person, not an agent — see *Next steps*.
 
 ---
 
@@ -82,6 +85,12 @@ Ordered. Nothing below the line starts before the line is crossed.
       (`D-OPS-1`), primary user (`D-UI-4`), polling over subscriptions
       (`D-API-7`, which supersedes `D-API-1`), and the rest.
 - [ ] **Demo passphrase or not** — `Q-SEC-4`.
+- [ ] **Sign the workspace shape** — `D-OPS-2` (three packages and one app,
+      `contracts ← container-core ← railway-client ← console`) and `D-OPS-3`
+      (packages consumed from source, no `dist/`); answer `Q-UI-5` (where the
+      two Railway status enums live) and `Q-SEC-5` (who reads the environment).
+      Until then no file moves.
+      Specified in [`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/).
 
 **Ask Railway** (the posting says to — `R-7`): `Q-API-4` token type;
 `Q-API-7` — is a project token meant to be unable to subscribe, is a
@@ -104,13 +113,17 @@ what the customers page actually says. Update the `[to-verify]` marks.
       frame recorded. The service is left **stopped**.
 - [ ] **Read the usage page** a day later and close `Q-OPS-2` — is a stopped
       deployment billed? (T-3.5)
-- [ ] **Then build**, in the order of
-      [`tasks.md`](openspec/changes/railway-container-control/tasks.md):
-      scaffold → transport and errors → poller → state derivation → verbs →
-      routes → the screen → tests → deploy → README and walkthrough.
+- [ ] **Then build**, one child change at a time, in this order:
+      [`monorepo-workspace`](openspec/changes/monorepo-workspace/) →
+      [`container-verbs`](openspec/changes/container-verbs/) →
+      [`console-server`](openspec/changes/console-server/) →
+      [`console-screen`](openspec/changes/console-screen/) →
+      [`deploy-on-railway`](openspec/changes/deploy-on-railway/) → README and
+      walkthrough. The parent's
+      [`tasks.md`](openspec/changes/railway-container-control/tasks.md) is the
+      index of what moved where.
 
-Tasks that need none of the above and can start today: T-2.1, T-2.2, T-3.1,
-T-3.2, T-4.1, T-4.3, T-5.1, T-5.2 and T-6.1 — the fixtures it needed now exist.
+Nothing that is code can start today: every child change waits on a signature.
 
 ---
 
@@ -120,11 +133,12 @@ T-3.2, T-4.1, T-4.3, T-5.1, T-5.2 and T-6.1 — the fixtures it needed now exist
 openspec/
 ├── _research/         source material — every claim marked [observed] / [inferred] / [to-verify]
 ├── changes/
-│   └── railway-container-control/
-│       ├── proposal.md      problem, scenario, scope, what is left out
-│       ├── design.md        UI states, layers, state derivation, sequences, stack, topology
-│       ├── verification.md  60 falsifiable acceptance criteria (V-N)
-│       └── tasks.md         ordered tasks — result, dependencies, acceptance, how verified
+│   ├── railway-container-control/   the parent: proposal, design, 60 criteria (V-N), tasks as an index
+│   ├── monorepo-workspace/          pnpm + Turborepo, three packages, the provider port — blocks all code
+│   ├── container-verbs/             up() / down() — blocked on Q-API-2
+│   ├── console-server/              runtime, four routes, SSE, fake Railway
+│   ├── console-screen/              the one screen
+│   └── deploy-on-railway/           the workspace on Railway, manual checks
 ├── current/           what the console *is* — empty until the change is implemented and archived
 ├── decisions.md       D-<CAP>-N, each with its rejected alternatives; proposed until the owner signs
 └── open-questions.md  Q-<CAP>-N, never smoothed over in prose

@@ -47,6 +47,13 @@ Rules:
 
 ## 2. Layers
 
+> **Pending `D-OPS-2`.** The three layers below become three workspace packages —
+> `@repo/railway-client`, `@repo/container-core`, and the route handlers inside
+> `apps/console` — with `ContainerState` moving to `@repo/contracts`. The rules at
+> the end of this section are restated per package in
+> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §6. The
+> diagram is redrawn there once the decision is signed.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │ browser (one page)                                                   │
@@ -350,6 +357,11 @@ open — reading state is harmless. If it is unset, there is no gate.
 There is no route to choose a project, environment or service.
 
 ## 10. Stack and runtime — `D-UI-2`
+
+> **Pending `D-OPS-2`.** The layout below is the single-application one that
+> PR #4 merged. The workspace layout that replaces it is
+> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1;
+> the runtime constraints in this section do not change.
 
 Next.js (App Router) + TypeScript, one process, `next start`. In Next.js terms:
 
