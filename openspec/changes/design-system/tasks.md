@@ -64,3 +64,8 @@ to merge, because the only thing left is the import.
 > and `border-line-strong` are still emitted, while the state variants
 > (`hover:bg-accent-hover`, `disabled:bg-accent/55`, `bg-muted/10`) silently
 > vanish. The probe should be a state variant.
+>
+> **Acted on 2026-09-15 by `designmd-conformance`.** `V-DS-14` is struck and
+> replaced by `V-DC-10` / `V-DC-11`: `scripts/check-styles.mjs` probes the state
+> variants, and its `--self-test` proves the check by removing `@source` and
+> forcing an uncached rebuild.

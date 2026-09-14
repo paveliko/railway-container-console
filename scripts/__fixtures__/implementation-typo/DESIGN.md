@@ -24,7 +24,7 @@ implementation:
       regular: 400
       medium: 500
       bold: 600
-  border:
+  boarder:
     hairline: 1px
   focus:
     width: 2px
@@ -61,7 +61,7 @@ contrast:
     indicator: 3.0
   house: {}
   checks:
-    - { id: probe/only/default/label, usage: text, size: md, exempt: inactive, house: disabledLabelStaysLegible, fg: { color: line }, bg: [{ color: surface }], ratio: 1.29 }
+    - { id: probe/only/default/label, usage: text, size: md, fg: { color: ink }, bg: [{ color: surface }], ratio: 18.47 }
 ---
 
 # Fixture

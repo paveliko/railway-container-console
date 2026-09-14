@@ -1,32 +1,57 @@
 ---
-designmd: 1
-tokens:
-  colors:
-    ink: "#111418"
-    muted: "#5b6672"
-    line: "#dfe3e8"
-    lineStrong: "#7e8895"
-    surface: "#ffffff"
-    accent: "#2f6feb"
-  spacing:
-    xs: 4px
-  radius:
-    sm: 4px
+version: alpha
+name: Fixture
+colors:
+  ink: "#111418"
+  muted: "#5b6672"
+  line: "#dfe3e8"
+  lineStrong: "#7e8895"
+  surface: "#ffffff"
+  accent: "#2f6feb"
+typography:
+  md:
+    fontFamily: &sans ui-sans-serif, system-ui, sans-serif
+    fontSize: 15px
+rounded:
+  sm: 4px
+spacing:
+  xs: 4px
+implementation:
+  note: fixture
+  typography:
+    mono: ui-monospace, monospace
+    weight:
+      regular: 400
+      medium: 500
+      bold: 600
+  border:
+    hairline: 1px
+  focus:
+    width: 2px
+    offset: 2px
+    color: accent
+  state:
+    disabledAlpha: 0.55
+    tintAlpha: 0.1
   spinner:
     size:
       sm: 16px
+    stroke: 2px
+  motion:
+    spin: 0.9s
+  components:
+    probe:
+      variants: [only]
+      states: [default, hover]
+      grounds: [surface]
 grid:
   step: 4
-  applies: [spacing, radius, spinner.size]
+  applies: [spacing, rounded, spinner.size]
   exempt: {}
-components:
-  probe:
-    variants: [only]
-    states: [default, hover]
 contrast:
   method:
     space: srgb
-    composite: unquantised
+    composite: srgb-8bit
     round: 2
     tolerance: 0.01
   wcag:

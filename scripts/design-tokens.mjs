@@ -12,10 +12,10 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { parse } from 'yaml';
 
-export const ROOT = fileURLToPath(new URL('..', import.meta.url));
+import { ROOT, kebab, readModel } from './design-model.mjs';
+
+export { ROOT, readModel };
 
 const HEADER = [
   '/* Generated from DESIGN.md by scripts/design-tokens.mjs — do not edit. */',
@@ -29,21 +29,8 @@ const HEADER = [
  */
 export const FORBIDDEN_IN_OUTPUT = ['@repo/', 'backboard', 'fetch(', '/api/', 'container', 'railway', 'deployment'];
 
-/** The frontmatter of DESIGN.md, parsed. */
-export function readSpec(root = ROOT) {
-  const text = readFileSync(join(root, 'DESIGN.md'), 'utf8');
-  const match = /^---\n([\s\S]*?)\n---\n/.exec(text);
-  if (match === null) throw new Error('DESIGN.md has no YAML frontmatter block');
-  const spec = parse(match[1]);
-  if (spec?.designmd !== 1) throw new Error('DESIGN.md frontmatter is not designmd: 1');
-  return spec;
-}
-
 /** `13px` → `0.8125rem`. Type respects the reader's font size; WCAG 1.4.4. */
 const toRem = (px) => `${Number.parseFloat(px) / 16}rem`;
-
-/** camelCase → kebab-case, for CSS custom property names. */
-const kebab = (name) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
 // ---------------------------------------------------------------------------
 // theme.css
@@ -74,7 +61,7 @@ export function renderThemeCss(spec) {
   push();
   push('  /* measures */');
   for (const [name, value] of Object.entries(t.spacing)) push(`  --spacing-${name}: ${value};`);
-  for (const [name, value] of Object.entries(t.radius)) push(`  --radius-${name}: ${value};`);
+  for (const [name, value] of Object.entries(t.rounded)) push(`  --radius-${name}: ${value};`);
 
   push();
   push('  /* values a utility class cannot carry */');
@@ -151,42 +138,11 @@ const entries = (obj, render, indent = '  ') =>
 
 const union = (keys) => keys.map(quote).join(' | ');
 
-/** The per-state class string for one Button variant. */
-function buttonClasses(spec, variant) {
-  const v = {
-    primary: [
-      'bg-accent border-accent text-surface',
-      'hover:bg-accent-hover active:bg-accent-active',
-      'disabled:bg-accent/55 disabled:border-accent/55 disabled:text-ink',
-    ],
-    secondary: [
-      'bg-surface border-line-strong text-ink',
-      'hover:bg-raised active:bg-raised',
-      'disabled:bg-surface disabled:border-line-strong/55 disabled:text-muted',
-    ],
-  };
-  const alpha = Math.round(spec.tokens.state.disabledAlpha * 100);
-  return v[variant].join(' ').replaceAll('/55', `/${alpha}`);
-}
-
-/** Fill / text / border classes for one tone. */
-function toneClasses(spec, tone) {
-  const tint = Math.round(spec.tokens.state.tintAlpha * 100);
-  const map = {
-    neutral: ['muted', 'muted', 'line-strong'],
-    accent: ['accent', 'ink', 'accent'],
-    positive: ['positive', 'positive', 'positive'],
-    caution: ['caution', 'caution', 'caution'],
-    danger: ['danger', 'danger', 'danger'],
-  };
-  const [fill, text, border] = map[tone];
-  return { fill: `bg-${fill}/${tint}`, text: `text-${text}`, border: `border-${border}` };
-}
-
 export function renderTokensTs(spec) {
   const t = spec.tokens;
   const tones = spec.components.badge.variants;
   const variants = spec.components.button.variants;
+  const { button: buttonClassesByVariant, tone: toneClassesByName } = spec.classes;
   const lines = [];
   const push = (s = '') => lines.push(s);
 
@@ -209,7 +165,7 @@ export function renderTokensTs(spec) {
   push();
   push(`export type TokenSpace = ${union(Object.keys(t.spacing))};`);
   push();
-  push(`export type TokenRadius = ${union(Object.keys(t.radius))};`);
+  push(`export type TokenRadius = ${union(Object.keys(t.rounded))};`);
   push();
   push(`export type Tone = ${union(tones)};`);
   push();
@@ -240,7 +196,7 @@ export function renderTokensTs(spec) {
   push('};');
   push();
   push('export const radius: Record<TokenRadius, string> = {');
-  push(entries(t.radius, quote));
+  push(entries(t.rounded, quote));
   push('};');
   push();
 
@@ -248,7 +204,7 @@ export function renderTokensTs(spec) {
   push('  * chosen so it clears 4.5 on that fill. */');
   push('export const tone: Record<Tone, { fill: string; text: string; border: string }> = {');
   for (const name of tones) {
-    const c = toneClasses(spec, name);
+    const c = toneClassesByName[name];
     push(`  ${name}: { fill: ${quote(c.fill)}, text: ${quote(c.text)}, border: ${quote(c.border)} },`);
   }
   push('};');
@@ -267,7 +223,7 @@ export function renderTokensTs(spec) {
   push('  * differ in all four states; sharing a disabled rule would give the');
   push('  * secondary variant an accent fill. */');
   push('export const buttonVariant: Record<ButtonVariant, string> = {');
-  for (const name of variants) push(`  ${name}: ${quote(buttonClasses(spec, name))},`);
+  for (const name of variants) push(`  ${name}: ${quote(buttonClassesByVariant[name])},`);
   push('};');
   push();
 
@@ -294,7 +250,7 @@ export function renderTokensTs(spec) {
 // ---------------------------------------------------------------------------
 
 export function generate(root = ROOT) {
-  const spec = readSpec(root);
+  const spec = readModel(root);
   return {
     'packages/ui/src/tokens.ts': renderTokensTs(spec),
     'packages/ui/src/theme.css': renderThemeCss(spec),

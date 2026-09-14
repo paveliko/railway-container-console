@@ -51,11 +51,15 @@ running one command.
 - V-DS-13 `build` — The generator **refuses to write** output containing a
   forbidden word, rather than deferring to CI. Putting the repository's own name
   in the provenance header exits non-zero and writes nothing.
-- V-DS-14 `build` — *Integration, after the Vite migration merges.* Classes that
-  originate in `@repo/ui` appear in the application's built CSS. A grep for
-  `min-h-touch` and `border-line-strong` in the build output finds them. Without
-  `@source` this fails while every other check stays green, which is the reason
-  it is a criterion of its own.
+- V-DS-14 ~~`build` — a grep for `min-h-touch` and `border-line-strong` in the
+  build output finds them.~~ **Wrong, and replaced 2026-09-15 by `V-DC-10` /
+  `V-DC-11`.** `vite-console` measured it: without `@source` both classes are
+  *still emitted*, because the application writes them itself, so the probe
+  survives the exact failure it was meant to catch. What vanishes is the state
+  variants — `hover:`, `disabled:`, an alpha modifier — which appear only inside
+  `@repo/ui`'s generated class strings. `scripts/check-styles.mjs` probes those,
+  and its `--self-test` proves it by removing `@source` and forcing an uncached
+  rebuild.
 
 ## The compositing convention
 
