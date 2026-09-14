@@ -142,3 +142,49 @@ earlier draft of this work quietly redefined it — which is the thing to avoid.
 the owner prefers it, is listen-and-degrade plus an explicit readiness endpoint
 and an amended `V-55`.
 
+
+---
+
+## Registered by `spec-validation`, 2026-09-15
+
+### `Q-OPS-6` — what does the checker do with an archived change?
+
+*low · me · open, deliberately unimplemented*
+
+`CLAUDE.md` says a change folder takes a date prefix when it moves to
+`archive/`. No change has been archived yet, `changes/archive/` does not exist,
+and `current/` is still empty by design — so every rule in `check-specs.mjs` is
+written against a corpus that has never seen one.
+
+The questions an archive raises are real and none of them has an obvious answer:
+does an archived change still have to satisfy `R-TRACE`, or is its work
+finished by definition? Do its identifiers stay in the resolvable set — they
+must, or every reference into it dangles — while being exempt from
+`R-STRUCT`? Does the date prefix change the child-code legend?
+
+**Implemented for now: nothing.** If `changes/archive/` appears, the checker
+reports it as an unknown directory rather than guessing. Designing the semantics
+before there is one archived change to look at would be speculation dressed as a
+rule.
+
+### `Q-OPS-7` — may the corpus gate stop being hermetic?
+
+*medium · **owner** · open, implemented with the hermetic default*
+
+Rule 5 says an agent does not move a decision from `proposed` to `ratified`.
+`check-specs.mjs` **cannot enforce it.** The rule is about a *change* to a file,
+and the script sees one working tree; catching it needs a diff against a git
+base — `origin/main`, or the merge base of the branch.
+
+That is not hard to write. It is a change of kind: `pnpm verify` is currently
+hermetic and gives the same answer on any clean clone, with no network and no
+git history, which is the property that lets it stand in for the CI this
+repository deliberately does not have. A rule that reads `git diff` gives a
+different answer in a shallow clone, on a detached head, and in an archive
+downloaded as a zip.
+
+**Recommendation:** leave the gate hermetic and enforce rule 5 by review, which
+is where "the owner signs" already lives. **Alternative:** a separate,
+explicitly non-hermetic `check:specs:history` that is not part of `verify` and
+is run in the PR only. **Default if unanswered:** the recommendation — rule 5 is
+listed in `changes/spec-validation/design.md` §7 as not verified.
