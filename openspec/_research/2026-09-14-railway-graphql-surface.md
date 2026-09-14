@@ -44,6 +44,16 @@ mentions subscriptions or WebSockets.
 | `{"type":"connection_init","payload":{"Authorization":"Bearer <token>"}}` | — | `{"type":"connection_ack"}` |
 | `{"id":"1","type":"subscribe","payload":{"query":"subscription { … }"}}` | — | accepted; no error frame |
 
+> **Corrected 2026-09-14 by the experiment.** `connection_ack` is returned for
+> a garbage token, an empty payload and no payload at all — it carries **no**
+> authentication signal. Authorization is enforced at `subscribe`, and a
+> **project token is refused there** even though it performs every HTTP
+> operation. Errors arrive inside a `next` frame as `payload.errors`, not as a
+> `type:"error"` frame. And `subscription deployment(id)` fires on changes to
+> `status` only, so it never reports a `deploymentStop`. See
+> [`2026-09-14-experiment-stop-and-start.md`](2026-09-14-experiment-stop-and-start.md);
+> this is why `D-API-1` was superseded by `D-API-7`.
+
 `[inferred]` This is the `graphql-ws` protocol (`graphql-transport-ws`
 subprotocol), with authentication carried in the `connection_init` payload —
 the standard pattern for that protocol, and the reason no custom HTTP header
@@ -51,10 +61,10 @@ is needed on the upgrade. Code 4408 is the protocol's *Connection initialisation
 timeout*. `wss://backboard.railway.com/graphql/v2` is the same path as the HTTP
 endpoint.
 
-`[inferred]` This resolves `Q-API-3` (a stream exists) and dissolves `Q-UI-1`
-(no polling is needed for state). A console can hold one socket and receive
-`deployment` updates as they happen; the rate limit stops being a design
-constraint on *reflecting* state and remains one only on *acting*.
+`[inferred, later disproved]` This appeared to resolve `Q-API-3` and dissolve
+`Q-UI-1`. It does neither: see the correction above. The stream exists, but not
+for the credential this console should use, and not for the transition it most
+needs to show.
 
 `[to-verify]` Whether a `Project-Access-Token` key in the `connection_init`
 payload authenticates a project token the same way; whether subscription

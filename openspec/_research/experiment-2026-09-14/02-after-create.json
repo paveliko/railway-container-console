@@ -1,0 +1,1 @@
+{"data":{"environment":{"serviceInstances":{"edges":[{"node":{"serviceId":"09ee9790-cc0e-4958-98bb-26cb88b745ef","serviceName":"target","numReplicas":null,"sleepApplication":false,"hasEverDeployed":false,"source":{"image":"nginx:alpine"},"latestDeployment":null}}]}}}}

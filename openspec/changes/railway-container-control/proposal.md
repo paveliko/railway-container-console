@@ -12,8 +12,9 @@ passphrase (`Q-SEC-4`). Everything else can proceed.
 Railway's take-home asks for an application with a UI that spins a container
 up and down through their GraphQL API, deployed on Railway, to be walked
 through in a 30-minute code review and discussed for how it would be extended
-(R-1 … R-7). The feature is small. What is not small is getting four things
-right that the research established the hard way:
+(R-1 … R-7). The feature is small. What is not small is getting five things
+right that the research established the hard way — three of them by running
+against the live API rather than by reading about it:
 
 1. **The browser cannot call Railway.** CORS on `backboard.railway.com` is
    pinned to `https://railway.com`
@@ -22,16 +23,24 @@ right that the research established the hard way:
 2. **The token cannot ship.** Public repository, public demo (`D-SEC-1`).
 3. **Failure does not look like failure.** "Not Authorized" is HTTP 200 with
    `extensions.code: INTERNAL_SERVER_ERROR` (surface §3), and a stopped
-   deployment still reports `status: SUCCESS`
-   ([domain model](../../_research/2026-09-14-railway-domain-model.md)). A
-   console that reads status codes, or `status` alone, will lie.
-4. **"Down" is four different verbs** — stop, remove, scale to zero, delete —
-   with different consequences
+   deployment still reports `status: SUCCESS` — **measured**, not inferred:
+   after a real `deploymentStop` the deployment reads `SUCCESS` indefinitely,
+   and the stop shows only in `deploymentStopped` and the instances
+   ([the experiment](../../_research/2026-09-14-experiment-stop-and-start.md)).
+   A console that reads status codes, or `status` alone, will lie.
+4. **State cannot be streamed** — not with the credential this console should
+   use. GraphQL subscriptions exist and work, but a **project token is refused
+   at `subscribe`**, and even an account token is never told about a
+   `deploymentStop`, because the stream fires on `status` and a stop does not
+   change it. So the console polls, on a bounded schedule (`D-API-7`).
+5. **"Down" is several different verbs** — stop, remove, delete, and *was*
+   scale-to-zero until the API rejected `numReplicas: 0` — with different
+   consequences
    ([operations §2](../../_research/2026-09-14-railway-operations-and-cost.md)).
    Picking one silently would be a product decision disguised as a detail.
 
 This change specifies the smallest application that satisfies R-1 … R-5 while
-getting those four things right, and leaves the fourth to the owner.
+getting those five things right, and leaves the last to the owner.
 
 ## The user's scenario
 
@@ -41,10 +50,11 @@ A reviewer opens the deployed URL. Nothing to log in to, nothing to paste
 1. The page shows the container's **current state** — `down`, `up`,
    `starting`, `stopping`, `failed`, `sleeping`, or `unknown` with what was
    observed — and one control whose label matches: *Start* or *Stop*.
-2. They press **Start**. The control disables and reads *Starting…*; the
-   deployment step appears as Railway reports it — *creating container*,
-   *configuring network*, *health check*. Nothing on the page claims the
-   container is up until Railway says so.
+2. They press **Start**. The control disables and reads *Starting…*, with the
+   deployment's own status beneath it — *deploying* — refreshed every two
+   seconds. Nothing on the page claims the container is up until Railway says
+   so. Measured: ~8 s when a stopped deployment is restarted, ~16 s for a
+   fresh one.
 3. The state becomes **up**, with the deployment's URL if it has one. The
    control reads *Stop*.
 4. They press **Stop**. *Stopping…*, then **down**.
@@ -61,20 +71,22 @@ That is the whole product. The UI states are tabled in
 
 ```
 browser ── HTTP + SSE ──▶ console server (one Node process) ── HTTPS POST ──▶ backboard.railway.com/graphql/v2
-                                                             ── WSS (graphql-transport-ws) ──▶ same URL
+                              ▲                                 poller: 30 s idle · 2 s in flight
+                              └── one poller serves every viewer
 ```
 
 - One screen, rendering one `ContainerState` and nothing else (`D-UI-3`).
 - One server-side module that is the only code allowed to know the endpoint,
   the credential or a GraphQL document (`D-API-2`, `D-API-3`).
-- Live state over Railway's undocumented-but-working subscriptions, held on
-  the server and fanned out over SSE; zero requests to Railway while idle
-  (`D-API-1`).
+- State kept current by one server-side poller — 30 s idle, 2 s while a
+  transition is in flight — fanned out to every browser over SSE. 120 requests
+  an hour at rest, against an observed budget of 1 000 (`D-API-7`).
 - Container state derived from `latestDeployment.status` **and**
   `instances[].status` **and** `deploymentStopped`, by a pure function with an
   explicit `unknown` (`D-API-4`).
 - Two domain verbs, `up()` and `down()`, whose bodies are the only thing the
-  owner's answer to `Q-API-2` changes (`D-API-5`, recommendation).
+  owner's answer to `Q-API-2` changes (`D-API-5` — recommendation now
+  `deploymentStop` ↔ `deploymentRestart`, verified live).
 - One configured `(project, environment, service)`; no browsing (`D-API-6`).
 - Next.js + TypeScript as a single `next start` process, one Railway service
   (`D-UI-2`); the target container in a separate project, from a public image,
@@ -86,12 +98,12 @@ browser ── HTTP + SSE ──▶ console server (one Node process) ── HTT
 |---|---|---|
 | Scope | one container, configured | picker over projects / services (needs account token) |
 | Controls | Start / Stop | Restart, Redeploy, Rollback, Remove-from-history |
-| State | phase + step + URL + last error | logs stream (`deploymentLogs` subscription exists), metrics |
+| State | phase + deployment status + URL + last error | live updates over the subscription (account token only); `deploymentEvents` step detail; logs; metrics |
 | Auth on the console | none, pending `Q-SEC-4` | passphrase; "Login with Railway" OAuth |
 | Token | one project token, server-side | token per reviewer; rotation |
 | Persistence | none — the server holds nothing across restarts | history of who pressed what, when |
 | Target | one public image, serverless off | image chosen in the UI; volumes; variables |
-| Tests | unit for the pure parts; two live checks skipped without a token | end-to-end against a throwaway project |
+| Tests | unit for the pure parts, against the experiment's real fixtures; one live read skipped without a token | end-to-end against a throwaway project |
 
 Every item in the right column is an honest answer to R-6's "how would you
 extend it". They are listed so that the walkthrough has them; none is built,
@@ -101,7 +113,7 @@ because none is asked for.
 
 | Left out | Why |
 |---|---|
-| The `Q-API-6` experiment (watching a real `deploymentStop`) | Research, not implementation; creates a paid resource; the owner runs it — [`tasks.md`](tasks.md) T-2.3 |
+| ~~The `Q-API-6` experiment~~ | **Done 2026-09-14.** Run against a real service with the owner's project token; results in [the experiment](../../_research/2026-09-14-experiment-stop-and-start.md), raw frames in `_research/experiment-2026-09-14/` |
 | Choosing between stop / remove / scale-to-zero / delete | Owner's decision, `Q-API-2` |
 | Anything in the "optional" column above | Not asked |
 
@@ -115,8 +127,22 @@ state this change recognises.
 
 | Decision | Where | Default if unanswered |
 |---|---|---|
-| What "down" does | `Q-API-2` → `D-API-5` | none — code does not start on the two verb bodies |
+| What "down" does | `Q-API-2` → `D-API-5`, recommendation now `deploymentStop` ↔ `deploymentRestart`, **verified live** | none — code does not start on the two verb bodies |
 | Stack | `D-UI-2` | Next.js + TS, as proposed |
 | Topology | `D-OPS-1` | separate projects, as proposed |
 | Demo passphrase | `Q-SEC-4` | none; a one-variable passphrase is a 20-line addition later |
 | Which of `Q-API-4`, `Q-API-7`, `Q-SEC-2`, `Q-SEC-3`, `Q-OPS-2` to ask Railway | `open-questions.md`, owner **Railway** | ask all five; R-7 says questions are expected |
+
+## Open questions this change raises
+
+- `Q-API-7` — three sharp questions for Railway, all raised by the experiment:
+  is a project token meant to be unable to subscribe; is a `deploymentStop`
+  meant to be invisible to a subscriber; is `connection_ack` meant to carry no
+  authentication signal at all.
+- `Q-API-9` — whether `deploymentRestart` still revives a deployment stopped
+  for hours rather than seconds. The up path falls back to a fresh deploy, so
+  this is quality, not correctness.
+- `Q-SEC-3` — whether matching the string `"Not Authorized"` is the intended
+  way to detect an auth failure. For Railway.
+- `Q-OPS-2` — whether the deployment now sitting stopped is billed. Readable
+  from the usage page a day later.
