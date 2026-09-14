@@ -147,7 +147,13 @@ packages/
 ├── railway-client/    @repo/railway-client  the only code that knows Railway exists
 └── ui/                @repo/ui              Button · Badge · Card · Spinner — react and nothing else
 scripts/
-└── check-boundaries.mjs   the eight rules pnpm and the exports maps cannot see
+├── check-boundaries.mjs   the eight rules pnpm and the exports maps cannot see
+├── check-design.mjs       every contrast ratio in DESIGN.md, recomputed from the hex
+├── check-designmd.mjs     DESIGN.md against the published @google/design.md format
+├── check-specs.mjs        the openspec/ corpus: identifiers, references, traceability
+├── check-styles.mjs       the @repo/ui classes that must survive into the built CSS
+├── design-model.mjs       the normalised model both design scripts read
+└── design-tokens.mjs      DESIGN.md → @repo/ui tokens.ts and theme.css
 ```
 
 ```
@@ -169,7 +175,11 @@ openspec/
 │   ├── container-verbs/             up() / down() — blocked on Q-API-2
 │   ├── console-server/              runtime, four routes, SSE, fake Railway
 │   ├── console-screen/              the one screen
-│   └── deploy-on-railway/           the workspace on Railway, manual checks
+│   ├── design-system/               DESIGN.md as the single source for every token
+│   ├── designmd-conformance/        that file, in the published format
+│   ├── vite-console/                Next.js out, Vite and one long-lived process in
+│   ├── deploy-on-railway/           the workspace on Railway, manual checks
+│   └── spec-validation/             this corpus, checked by a script rather than by prose
 ├── current/           what the console *is* — empty until the change is implemented and archived
 ├── decisions.md       D-<CAP>-N, each with its rejected alternatives; proposed until the owner signs
 └── open-questions.md  Q-<CAP>-N, never smoothed over in prose
@@ -191,10 +201,16 @@ pnpm verify       # everything below, in dependency order — run this before pu
 
 There is no CI workflow; `pnpm verify` is the gate, and it is hermetic — no
 secret, no network, no Railway — so it gives the same answer on any clean
-clone. Its parts, when you want one on its own:
+clone. Four of its checks prove themselves: `check-design.mjs` and
+`check-specs.mjs` each run a suite of fixtures whose red *and* green paths are
+committed, `check-styles.mjs` proves its probe by removing `@source` and
+rebuilding, and every rule in `check-specs.mjs` has a logged break-and-revert.
+A check whose failure path is untested is not a guarantee. Its parts, when you
+want one on its own:
 
 ```bash
-pnpm check        # the GraphQL operations gate, then the eight boundary rules
+pnpm check        # the operations gate, the boundary rules, the two design
+                  # checks, and the specification corpus
 pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
 pnpm test         # 90 tests across five packages
 pnpm build        # runs the operations gate first, then next build

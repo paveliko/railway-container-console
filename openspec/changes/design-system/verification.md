@@ -16,6 +16,11 @@ running one command.
   `exemption-abused`, `ratio-mismatch`, `alpha-margin-too-thin`,
   `grid-violation`, `grid-exempt-typo`, `accent-on-small-text`,
   `line-identifies-control`, `coverage-gap`.
+  **Amended by `spec-validation`:** the fixtures moved from
+  `scripts/__fixtures__/` to `scripts/__fixtures__/design/`, because that script
+  treated every entry in the shared directory as one of its own and a second
+  checker's fixtures would have broken it. The set, the names and the command
+  are unchanged; `implementation-typo` brings the count to ten.
 
 ## Contrast
 

@@ -15,7 +15,8 @@ Children of a change cite the parent's `V-N` unchanged and prefix their own
 criteria and tasks with a two-letter code: `V-MW-N` / `T-MW-N` for
 `monorepo-workspace`, `CV` for `container-verbs`, `CS` for `console-server`,
 `SC` for `console-screen`, `DS` for `design-system`, `DC` for
-`designmd-conformance`, `VC` for `vite-console`, `DR` for `deploy-on-railway`.
+`designmd-conformance`, `VC` for `vite-console`, `DR` for `deploy-on-railway`,
+`SV` for `spec-validation`.
 
 | Change | Status | What it proposes |
 |---|---|---|
@@ -28,3 +29,4 @@ criteria and tasks with a two-letter code: `V-MW-N` / `T-MW-N` for
 | [`designmd-conformance/`](designmd-conformance/) | proposed · implemented | `DESIGN.md` moves from an invented schema to the published `@google/design.md` format, with a normalisation layer so the generator and validator stop reading raw frontmatter, and the format's linter as a second gate held to an allowlist. Compatible with documented extensions and one documented deviation — not conformant. Also replaces `V-DS-14`, which `vite-console` measured and found does not work. |
 | [`vite-console/`](vite-console/) | proposed · implemented, awaiting signature | Next.js out, Vite + one long-lived Node process in; the operation contract the mutation, the poller and the stream all agree on; and the first code for `container-verbs`, `console-server` and `console-screen`. Carries `design-system`'s Phase B. `D-UI-5` and `D-OPS-4` await the owner. |
 | [`deploy-on-railway/`](deploy-on-railway/) | proposed · owner-heavy | The workspace on Railway as a *shared* monorepo: build from the root, filtered start, watch paths; the target in project B; the manual checks. Closes `Q-OPS-3`. |
+| [`spec-validation/`](spec-validation/) | proposed · implemented, awaiting signature | The corpus checked by a script: identifiers unique and dense, references that resolve, every criterion traced to a task, links that resolve, closed vocabularies — errors; claim markers, credential slots and register filing — warnings. Registers `D-OPS-5`, the `planned` decision status, `Q-OPS-6` and `Q-OPS-7`. The one change that serves the specification rather than the product. |

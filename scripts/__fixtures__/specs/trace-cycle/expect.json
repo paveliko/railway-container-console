@@ -1,0 +1,12 @@
+{
+  "problems": [
+    {
+      "rule": "R-TRACE",
+      "id": "V-PR-1"
+    },
+    {
+      "rule": "R-TRACE",
+      "id": "V-PR-2"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Design: `probe`
+
+A fixture.

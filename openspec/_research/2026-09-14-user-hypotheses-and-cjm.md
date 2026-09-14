@@ -93,9 +93,9 @@ Ask about the last real case:
 4. Where did you have to look at logs or ask a colleague?
 5. What could have gone wrong, and what were you afraid of?
 
-Registered as `Q-UI-3`; owner. Until it runs, `D-UI-4` stays *proposed* and
-this document stays a hypothesis.
+[observed] Registered as `Q-UI-3`; owner. Until it runs, `D-UI-4` stays
+*proposed* and this document stays a hypothesis.
 
-And before the interface is detailed, confirm in the API **what stopping means
-and what it does to the resource and its data** — `Q-API-2`, `Q-API-6`,
+[inferred] And before the interface is detailed, confirm in the API **what
+stopping means and what it does to the resource and its data** — `Q-API-2`, `Q-API-6`,
 `Q-OPS-2`. Button labels, warnings and the end of the journey all depend on it.

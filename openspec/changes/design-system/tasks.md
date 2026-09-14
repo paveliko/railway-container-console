@@ -14,8 +14,9 @@ to merge, because the only thing left is the import.
   Depends on: T-DS-1. Acceptance: V-DS-1, V-DS-13. Verified by:
   `pnpm design:tokens` leaving the tree unchanged.
 - [x] **T-DS-3 Validator and fixtures.** Result: `scripts/check-design.mjs`, the
-  eight fixtures under `scripts/__fixtures__/`, both wired into `pnpm check`.
-  Depends on: T-DS-2. Acceptance: V-DS-2 … V-DS-11. Verified by:
+  fixtures under `scripts/__fixtures__/design/` (`spec-validation` moved them
+  there), both wired into `pnpm check`.
+  Depends on: T-DS-2. Acceptance: V-DS-2 … V-DS-11, V-DS-21. Verified by:
   `pnpm check:design:self-test`.
 - [x] **T-DS-4 Boundary amendments.** Result: rule 3 consults the `exports` map;
   rule 5 gains `railway`, `deployment` and `.css`. `packages/ui/package.json`
@@ -49,7 +50,7 @@ to merge, because the only thing left is the import.
   updated for the required prop. Depends on: T-DS-7. Verified by: `pnpm verify`.
 - [x] **T-DS-11 — done by `vite-console`.** The real screen.** Result: computed-style measurements on the
   screen as it exists post-merge, at 375px and desktop, plus screenshots.
-  Depends on: T-DS-8. Acceptance: V-DS-19. Verified by: the measurements and
+  Depends on: T-DS-8. Acceptance: V-DS-19, V-DS-20. Verified by: the measurements and
   screenshots in the PR.
 - [ ] **T-DS-12 Paperwork.** Result: `D-UI-6` signed by the owner; archive.
   Depends on: T-DS-11. *Owner.*
