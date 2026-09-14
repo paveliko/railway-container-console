@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.next/
 .turbo/
 *.log
 .env
@@ -8,5 +7,4 @@ dist/
 !.env.example
 .DS_Store
 .claude/settings.local.json
-next-env.d.ts
 *.tsbuildinfo

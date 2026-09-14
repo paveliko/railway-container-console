@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Railway container console</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      The one module the browser loads. Everything it reaches is the client
+      bundle, which is why `scripts/check-boundaries.mjs` asserts that this
+      path stays under /src/client/: the boundary rule seeds on that directory,
+      and an entry pointing anywhere else would make the rule pass while
+      checking nothing.
+    -->
+    <script type="module" src="/src/client/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+# "Down", per D-API-5. Stops the deployment in place: the deployment survives,
+# `deploymentStopped` becomes true and the instances go to EXITED. Observed
+# live, ~7 s — _research/2026-09-14-experiment-stop-and-start.md.
+mutation StopDeployment($id: String!) {
+  deploymentStop(id: $id)
+}

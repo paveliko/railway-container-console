@@ -2,7 +2,7 @@
 
 Prefix `V-CS-N`. Parent criteria cited by their `V-N`.
 
-- V-CS-1 `build` — `pnpm turbo run build` succeeds with no `RAILWAY_*` variable set; the four route files export `runtime = 'nodejs'` and `dynamic = 'force-dynamic'` (grep).
+- V-CS-1 `build` — `pnpm turbo run build` succeeds with no `RAILWAY_*` variable set; **Amended by `vite-console`:** there is no framework to ask for a runtime. The equivalent guarantee is that `vite build` succeeds with no `RAILWAY_*` variable set — the build never imports the server — and that `start` runs one long-lived process.
 - V-CS-2 `unit` — The first `GET /api/container/state` with `RAILWAY_TOKEN_KIND` missing responds `500 { error: 'console-misconfigured' }` whose message names the variable; no Railway request is made (fake `fetch` records zero calls).
 - V-CS-3 `unit` — Two `EventSource` clients and a third that reconnects each receive the current state as their first event; the fake `fetch` records the same number of reads as with zero clients (`V-26`, `V-26a`).
 - V-CS-4 `unit` — A `: ping` comment is written at least once per 20 s of fake time on an open stream; closing the response unsubscribes (listener count returns to its previous value).

@@ -18,6 +18,14 @@ deploy log as `V-55` requires.
 
 ## 2. SSE
 
+> **Amended by `vite-console` (2026-09-15).** The stream carries **two** event
+> types, not one. The unnamed event is unchanged and still carries a bare
+> `ContainerState` that replaces the whole value (`V-47`). A named `operation`
+> event carries what the state cannot say — whether the press the reader made is
+> still running. Without it, a press whose container never changes leaves the
+> control disabled forever: the release is the *absence* of a state change, and
+> no amount of comparing states can see it. See `vite-console/design.md` §1.6.
+
 `GET /api/container/events` returns a `ReadableStream`; on open it writes the
 poller's current state (or nothing, if the first read has not landed), then
 one `data:` line per state change, then a `: ping` comment every 15 s so

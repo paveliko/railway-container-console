@@ -24,3 +24,21 @@ export const READ_SERVICE_INSTANCE = /* GraphQL */ `
     }
   }
 `;
+
+export const STOP_DEPLOYMENT = /* GraphQL */ `
+  mutation StopDeployment($id: String!) {
+    deploymentStop(id: $id)
+  }
+`;
+
+export const RESTART_DEPLOYMENT = /* GraphQL */ `
+  mutation RestartDeployment($id: String!) {
+    deploymentRestart(id: $id)
+  }
+`;
+
+export const DEPLOY_SERVICE_INSTANCE = /* GraphQL */ `
+  mutation DeployServiceInstance($environmentId: String!, $serviceId: String!) {
+    serviceInstanceDeployV2(environmentId: $environmentId, serviceId: $serviceId)
+  }
+`;

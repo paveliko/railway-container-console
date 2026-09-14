@@ -233,7 +233,7 @@ research asks that the permissions case read as permissions, not as a fault:
 | Code | Sentence |
 |---|---|
 | `railway-not-authorized` | `The token is not permitted to do this` |
-| `railway-rate-limited` | `Railway is rate-limiting us — retrying in 30 s` |
+| `railway-rate-limited` | ~~`Railway is rate-limiting us — retrying in 30 s`~~ → `Railway is rate-limiting us — try again in N seconds` (**amended by `vite-console`**: nothing retries — `V-12` forbids it for a non-idempotent mutation — and the number is whatever Railway sent, not always 30) |
 | `railway-unavailable` | `Railway did not answer` |
 | `railway-rejected` | `Railway refused the request` |
 

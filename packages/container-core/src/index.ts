@@ -1,4 +1,4 @@
-export type { ContainerProvider } from './provider';
+export type { ContainerProvider, ContainerReader } from './provider';
 
 export {
   deriveContainerState,
@@ -15,8 +15,13 @@ export {
   IDLE_INTERVAL_MS,
   IN_FLIGHT_INTERVAL_MS,
   IN_FLIGHT_TIMEOUT_MS,
+  READ_TIMEOUT_MS,
   Poller,
+  resolutionFor,
   type Listener,
+  type OperationListener,
   type PollerOptions,
+  type Resolution,
   type Transition,
+  type VerbResolution,
 } from './poller';
