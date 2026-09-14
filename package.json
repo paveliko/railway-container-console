@@ -11,8 +11,8 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "check": "turbo run check && node scripts/check-boundaries.mjs && node scripts/check-design.mjs && node scripts/check-designmd.mjs",
-    "verify": "pnpm run check && turbo run typecheck test build && node scripts/check-styles.mjs",
+    "check": "turbo run check && node scripts/check-boundaries.mjs && node scripts/check-design.mjs && node scripts/check-designmd.mjs && node scripts/check-specs.mjs",
+    "verify": "pnpm run check && pnpm run check:design:self-test && pnpm run check:specs:self-test && turbo run typecheck test build && node scripts/check-styles.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test:live": "turbo run test:live",
     "check:design": "node scripts/check-design.mjs",
@@ -20,7 +20,9 @@
     "design:tokens": "node scripts/design-tokens.mjs",
     "check:designmd": "node scripts/check-designmd.mjs",
     "check:styles": "node scripts/check-styles.mjs",
-    "check:styles:self-test": "node scripts/check-styles.mjs --self-test"
+    "check:styles:self-test": "node scripts/check-styles.mjs --self-test",
+    "check:specs": "node scripts/check-specs.mjs",
+    "check:specs:self-test": "node scripts/check-specs.mjs --self-test"
   },
   "devDependencies": {
     "@google/design.md": "0.4.0",

@@ -20,7 +20,7 @@
 
 ## T-VC-3 — the server (`console-server`)
 
-- [x] **T-VC-3.1** `runtime.ts`, `routes.ts`, `errors.ts`, `http.ts`, `session.ts`, `static.ts`, `dev.ts`, `main.ts`.
+- [x] **T-VC-3.1** `runtime.ts`, `routes.ts`, `errors.ts`, `http.ts`, `session.ts`, `static.ts`, `dev.ts`, `main.ts`. Acceptance: V-VC-24.
 - [x] **T-VC-3.2** The `RailwayError → ConsoleError` mapping, which existed nowhere. Acceptance: `V-VC-18`.
 - [x] **T-VC-3.3** SSE with the second `operation` event. Acceptance: `V-VC-13`, `V-VC-14`.
 - [x] **T-VC-3.4** `test/fake-railway.ts`, and `test/dev-server.ts` so the screen can be driven without a token.
@@ -34,13 +34,13 @@
 
 ## T-VC-5 — the migration itself
 
-- [x] **T-VC-5.1** Vite, three tsconfigs, `index.html`, the manifest; `app/`, `next.config.ts`, `next-env.d.ts`, `.next/` deleted.
+- [x] **T-VC-5.1** Vite, three tsconfigs, `index.html`, the manifest; `app/`, `next.config.ts`, `next-env.d.ts`, `.next/` deleted. Acceptance: V-VC-19.
 - [x] **T-VC-5.2** Boundary rule 4 reseeded on `src/client/` with the entry assertion. Acceptance: `V-VC-15`, verified by break-and-revert three ways.
 - [x] **T-VC-5.3** `turbo.json`, root `engines`, `.gitignore`.
 
 ## T-VC-6 — the design system's Phase B
 
-- [x] **T-VC-6.1** (`T-DS-8`) `@tailwindcss/vite` beside `react()`; the stylesheet's three lines.
+- [x] **T-VC-6.1** (`T-DS-8`) `@tailwindcss/vite` beside `react()`; the stylesheet's three lines. Acceptance: V-VC-20.
 - [x] **T-VC-6.2** (`T-DS-9`) `DESIGN.md` and the generator in Turborepo's `globalDependencies`.
 - [x] **T-VC-6.3** (`T-DS-10`) every `Spinner` call site passes the now-required `label`.
 - [x] **T-VC-6.4** (`T-DS-11`) the computed-style measurements, before merge. Acceptance: `V-VC-21` … `V-VC-23`.
@@ -49,5 +49,5 @@
 
 - [~] **T-VC-7.1** `Q-UI-8`: the card's maximum width is `max-w-[30rem]`, an arbitrary value, because `DESIGN.md` has no layout token. **Owner**, then either the token or a written exemption.
 - [~] **T-VC-7.2** `Q-UI-7`, `Q-SEC-6`, `Q-OPS-5`. **Owner.**
-- [ ] **T-VC-7.3** `Q-OPS-4`: the clean-install and symlink check against Railway's actual image, and whether its edge buffers `text/event-stream`. Closes with the first deploy.
+- [ ] **T-VC-7.3** `Q-OPS-4`: the clean-install and symlink check against Railway's actual image, and whether its edge buffers `text/event-stream`. Closes with the first deploy. Acceptance: V-VC-25.
 - [ ] **T-VC-7.4** Archive, once merged.

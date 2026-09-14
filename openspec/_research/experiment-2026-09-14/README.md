@@ -14,4 +14,4 @@ Nothing here is edited; timestamps are UTC as returned or recorded.
 | `fidelity.jsonl` | a second deploy watched over an account-token subscription: `DEPLOYING→SUCCESS` on the new deployment, `REMOVING→REMOVED` on the old |
 | `04-replicas0.json` | `numReplicas: 0` rejected — `"Error in numReplicas - Invalid input"` |
 
-No token appears in any of these files.
+[observed] No token appears in any of these files.

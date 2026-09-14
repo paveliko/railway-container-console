@@ -11,7 +11,7 @@ whom is stated.
 
 ## T-MW-1 · Workspace skeleton
 
-- [x] **T-MW-1.1 Root files.** Result: `pnpm-workspace.yaml`, `turbo.json` exactly as design §5, root `package.json` with `packageManager: pnpm@10.33.2`, `engines.node >= 22`, scripts delegating to turbo; `tsconfig.base.json` per design §4; `package-lock.json` removed; `pnpm-lock.yaml` committed. Depends on: T-MW-0.1. Acceptance: V-MW-4, V-MW-18. Verified by: `pnpm install --frozen-lockfile`.
+- [x] **T-MW-1.1 Root files.** Result: `pnpm-workspace.yaml`, `turbo.json` exactly as design §5, root `package.json` with `packageManager: pnpm@10.33.2`, `engines.node >= 22`, scripts delegating to turbo; `tsconfig.base.json` per design §4; `package-lock.json` removed; `pnpm-lock.yaml` committed. Depends on: T-MW-0.1. Acceptance: V-MW-4, V-MW-18, V-MW-3. Verified by: `pnpm install --frozen-lockfile`.
 - [x] **T-MW-1.2 Empty packages.** Result: `packages/{contracts,container-core,railway-client,ui}` and `apps/console`, each with `package.json` (`private`, `type: module`, an `exports` map, workspace deps as `workspace:*` per design §2), a `tsconfig.json` extending the base, a `typecheck` script, an `src/index.ts`, a short `README.md`. Depends on: T-MW-1.1. Acceptance: V-MW-21, V-MW-22; `pnpm turbo run typecheck` passes on the empty tree. Verified by: the run.
 
 ## T-MW-2 · Move, keeping history
@@ -26,7 +26,7 @@ whom is stated.
 
 - [x] **T-MW-3.1 Boundary script.** Result: `scripts/check-boundaries.mjs` implementing design §6 — eight rules; writing the break-and-revert procedure turned up a gap `tsc` leaves open (a side-effect import of an undeclared package raises no error) and rules 7 and 8 close it — run by the root `check` script. Depends on: T-MW-2.5. Acceptance: V-MW-7, V-MW-8, V-MW-22, V-MW-25. Verified by: the break-and-revert procedures, logged in the PR.
 - [x] **T-MW-3.2 Fixture round-trip test.** Result: a test in `container-core` that runs every deployment-shaped frame of the recorded experiment through derive → JSON → `containerStateSchema.parse`. Depends on: T-MW-2.2. Acceptance: V-MW-13. Verified by: `pnpm test`.
-- [x] **T-MW-3.3 One local gate.** Result: a root `verify` script running the operations gate, the boundary rules, `typecheck`, `test` and `build`; `globalDependencies` and `$TURBO_ROOT$` inputs so that `tsconfig.base.json` and the schema excerpt actually invalidate the tasks that read them; **no `.github/` directory** — design §7 records why the workflow was written and then removed. Depends on: T-MW-3.1. Acceptance: V-MW-23, V-MW-27; V-MW-2 (test titles before/after compared in the PR description). Verified by: `pnpm verify` on a clean clone, and the hash comparisons in V-MW-27.
+- [x] **T-MW-3.3 One local gate.** Result: a root `verify` script running the operations gate, the boundary rules, `typecheck`, `test` and `build`; `globalDependencies` and `$TURBO_ROOT$` inputs so that `tsconfig.base.json` and the schema excerpt actually invalidate the tasks that read them; **no `.github/` directory** — design §7 records why the workflow was written and then removed. Depends on: T-MW-3.1. Acceptance: V-MW-23, V-MW-27; V-MW-2 (test titles before/after compared in the PR description), V-MW-19, V-MW-26. Verified by: `pnpm verify` on a clean clone, and the hash comparisons in V-MW-27.
 
 ## T-MW-4 · Paperwork
 
