@@ -10,4 +10,5 @@ Prefix `V-SC-N`. Parent criteria cited by their `V-N`.
 - V-SC-6 `unit` — An SSE event whose body fails `containerStateSchema` is ignored and logged; the previous state stays rendered.
 - V-SC-7 `unit` — `V-49`: after mount, press and one event, `localStorage.length` and `sessionStorage.length` are 0 and `document.cookie` is empty (jsdom).
 - V-SC-8 `build` — `V-15`: the grep step of design §3 passes; it fails when the sentinel is deliberately imported into a client component (break-and-revert, logged).
-- V-SC-9 `build` — No file under `apps/console/src/features/` imports `@repo/container-core` or `@repo/railway-client` (grep).
+- V-SC-9 `build` — No file under `apps/console/src/features/` imports `@repo/container-core` or `@repo/railway-client`; its only workspace imports are `@repo/contracts` and `@repo/ui` (grep — the same rule `V-MW-25` enforces from the workspace side).
+- V-SC-10 `unit` — Every component under `apps/console/src/features/container-control/` that renders a button, badge, card or spinner does so through `@repo/ui`, not through a locally redeclared element (grep for `<button` in the feature folder returns nothing).

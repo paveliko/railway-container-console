@@ -63,8 +63,8 @@ check with a stated procedure, and it passes or fails. `unit` needs no network;
 ## Operations documents
 
 - V-39 `build` — Every document under `railway/operations/` validates against `_research/railway-schema-excerpt.graphql`; a document using a field not in the excerpt fails the build.
-- V-40 `build` — A `.graphql` file containing `mutation` is imported only from `container/actions.ts`; any other importer fails the build (lint rule or grep). *Restated for packages as `V-MW-10` (documents live only in `railway-client`) and `V-CV-9` (only `container-core/actions.ts` calls a verb on the provider).*
-- V-41 `build` — The host `backboard.railway.com` appears in exactly one source file, `railway/transport.ts`. No `wss://` URL appears in the source at all (`D-API-7` removed the socket). *Restated for packages as `V-MW-9`.*
+- V-40 `build` — A `.graphql` file containing `mutation` is imported only from `container/actions.ts`; any other importer fails the build (lint rule or grep). **Restated for packages** (`D-OPS-2` ratified 2026-09-14) as `V-MW-10` — documents live only in `@repo/railway-client` — and `V-CV-9` — only `container-core/actions.ts` calls a verb on the provider. This line is now verified in its restated form only.
+- V-41 `build` — The host `backboard.railway.com` appears in exactly one source file, `railway/transport.ts`. No `wss://` URL appears in the source at all (`D-API-7` removed the socket). **Restated for packages** (`D-OPS-2` ratified 2026-09-14) as `V-MW-9`: the host occurs in exactly one file under `packages/railway-client/src/`. This line is now verified in its restated form only.
 
 ## UI — *(R-4)*
 
