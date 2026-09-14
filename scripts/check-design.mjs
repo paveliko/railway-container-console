@@ -16,7 +16,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generate, readSpec, FORBIDDEN_IN_OUTPUT } from './design-tokens.mjs';
+import { readModel } from './design-model.mjs';
+import { generate, FORBIDDEN_IN_OUTPUT } from './design-tokens.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -177,6 +178,28 @@ export function checkSpec(spec, generated, sources) {
     }
   }
 
+  // -- 4b. the published components block is derived, not maintained ---------
+  // The format's `components` section is a lossy projection of
+  // `implementation.components`. Deriving it and comparing is what stops the two
+  // becoming independent copies of the same values that drift apart quietly.
+  {
+    const { components: declared, derived } = spec.published;
+    const shown = (o) => JSON.stringify(o, Object.keys(o).sort());
+    for (const name of new Set([...Object.keys(derived), ...Object.keys(declared)])) {
+      if (declared[name] === undefined) {
+        fail('components', `components.${name} is missing; it follows from implementation.components`);
+      } else if (derived[name] === undefined) {
+        fail('components', `components.${name} does not follow from implementation.components`);
+      } else if (shown(declared[name]) !== shown(derived[name])) {
+        fail(
+          'components',
+          `components.${name} differs from what implementation.components implies: ` +
+            `${JSON.stringify(derived[name])}`,
+        );
+      }
+    }
+  }
+
   // -- 5. the generated files carry no product vocabulary --------------------
   for (const [path, text] of Object.entries(generated)) {
     for (const needle of FORBIDDEN_IN_OUTPUT) {
@@ -221,7 +244,7 @@ function readTree(root) {
 }
 
 function run(root) {
-  const spec = readSpec(root);
+  const spec = readModel(root);
   const { generated, committed, sources } = readTree(root);
   const problems = checkSpec(spec, generated, sources);
   for (const [path, text] of Object.entries(generated)) {
@@ -243,7 +266,7 @@ if (selfTest) {
     const expected = readFileSync(join(dir, name, 'expect.txt'), 'utf8').trim();
     let problems = [];
     try {
-      const spec = readSpec(join(dir, name));
+      const spec = readModel(join(dir, name));
       problems = checkSpec(spec, {}, {});
     } catch (error) {
       problems = [`parse: ${error.message}`];
@@ -272,6 +295,6 @@ if (selfTest) {
   }
   console.log(
     `Design check passed: ${spec.contrast.checks.length} contrast checks, ` +
-      `${Object.keys(spec.components).length} components, 6 rules.`,
+      `${Object.keys(spec.components).length} components, 7 rules.`,
   );
 }

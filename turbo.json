@@ -1,8 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
-
-  "globalDependencies": ["tsconfig.base.json", "DESIGN.md", "scripts/design-tokens.mjs"],
-
+  "globalDependencies": [
+    "tsconfig.base.json",
+    "DESIGN.md",
+    "scripts/design-model.mjs",
+    "scripts/design-tokens.mjs"
+  ],
   "tasks": {
     "check": {
       "inputs": [
@@ -10,13 +13,31 @@
         "$TURBO_ROOT$/openspec/_research/railway-schema-excerpt.graphql"
       ]
     },
-    "typecheck": { "dependsOn": ["^typecheck"] },
-    "test": { "dependsOn": ["^test"] },
-    "build": {
-      "dependsOn": ["^build", "^check"],
-      "outputs": ["dist/**"]
+    "typecheck": {
+      "dependsOn": [
+        "^typecheck"
+      ]
     },
-    "dev": { "cache": false, "persistent": true },
-    "test:live": { "cache": false }
+    "test": {
+      "dependsOn": [
+        "^test"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^build",
+        "^check"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:live": {
+      "cache": false
+    }
   }
 }
