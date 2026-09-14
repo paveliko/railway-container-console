@@ -1,0 +1,6 @@
+# The other half of "up": when there is no stopped deployment to revive. Costs
+# a new deployment and ~16 s, and returns the new deployment's id — which is
+# the target the operation waits for.
+mutation DeployServiceInstance($environmentId: String!, $serviceId: String!) {
+  serviceInstanceDeployV2(environmentId: $environmentId, serviceId: $serviceId)
+}

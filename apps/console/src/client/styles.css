@@ -1,0 +1,14 @@
+/*
+ * The three lines the design system's Phase B asks of a consuming application,
+ * and nothing else. `design-system/design.md` §5.
+ *
+ * `@source` is not optional and no type check covers it: Tailwind does not scan
+ * outside the package that owns the stylesheet, so without this line every
+ * class `@repo/ui` names resolves to nothing at runtime while the build stays
+ * perfectly green. `V-DS-14` greps the built CSS precisely because that failure
+ * is otherwise silent.
+ */
+
+@import "tailwindcss";
+@import "@repo/ui/theme.css";
+@source "../../../../packages/ui/src";

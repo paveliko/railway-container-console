@@ -19,7 +19,12 @@ export {
   type RailwayError,
 } from './errors';
 
-export { READ_SERVICE_INSTANCE } from './documents';
+export {
+  DEPLOY_SERVICE_INSTANCE,
+  READ_SERVICE_INSTANCE,
+  RESTART_DEPLOYMENT,
+  STOP_DEPLOYMENT,
+} from './documents';
 
 export {
   readContainer,
@@ -28,3 +33,4 @@ export {
 } from './read-container';
 
 export { createRailwayProvider } from './provider';
+export { startContainer, stopContainer } from './verbs';

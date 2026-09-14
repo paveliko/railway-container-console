@@ -14,6 +14,13 @@ export type RailwayError =
   | { kind: 'validation'; message: string; traceId?: string }
   | { kind: 'rate-limited'; retryAfterSeconds?: number }
   | { kind: 'network'; cause: unknown }
+  /**
+   * There is nothing to act on: the service has no deployment to stop. Not a
+   * Railway failure — Railway was never asked — but it reaches the caller by
+   * the same channel, because from the verb's point of view it is the same
+   * kind of event: the press cannot be carried out. `V-CV-4`.
+   */
+  | { kind: 'no-deployment' }
   | { kind: 'unknown'; message: string; code?: string; traceId?: string };
 
 export class RailwayRequestError extends Error {
@@ -120,6 +127,7 @@ function describe(detail: RailwayError): string {
     case 'validation': return `Railway rejected the query: ${detail.message}`;
     case 'rate-limited': return 'Railway rate limit reached';
     case 'network': return 'Railway was unreachable';
+    case 'no-deployment': return 'There is no deployment to act on';
     case 'unknown': return `Railway returned an error: ${detail.message}`;
   }
 }

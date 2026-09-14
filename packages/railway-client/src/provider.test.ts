@@ -59,8 +59,8 @@ describe('createRailwayProvider — V-MW-11', () => {
     });
   });
 
-  it('exposes read only — the verbs wait on Q-API-2', () => {
+  it('exposes the whole port — Q-API-2 is closed, D-API-5 signed', () => {
     const provider = createRailwayProvider(credential, target);
-    expect(Object.keys(provider)).toEqual(['read']);
+    expect(Object.keys(provider).sort()).toEqual(['down', 'read', 'up']);
   });
 });

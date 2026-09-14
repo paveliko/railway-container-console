@@ -31,25 +31,36 @@ to merge, because the only thing left is the import.
 
 ## Phase B — integration, after `console-nextjs-vite-migration` merges
 
-- [ ] **T-DS-7 Update from `main` and confirm the shape.** Result: the real
+- [x] **T-DS-7 — done by `vite-console`.** Update from `main` and confirm the shape.** Result: the real
   `vite.config.ts` and client entry are known, and the decision ID taken by the
   migration is confirmed so `D-UI-6` does not collide. Depends on: that merge.
   *Read-only.*
-- [ ] **T-DS-8 Wire the stylesheet.** Result: `@tailwindcss/vite` added to the
+- [x] **T-DS-8 — done by `vite-console`.** Wire the stylesheet.** Result: `@tailwindcss/vite` added to the
   existing config **keeping `react()`**; the app's stylesheet entry imports
   `tailwindcss`, `@repo/ui/theme.css` and declares `@source` for
   `packages/ui/src`. Depends on: T-DS-7. Acceptance: V-DS-14. Verified by:
   grepping the built CSS for `min-h-touch`.
-- [ ] **T-DS-9 Manifests and cache inputs.** Result: the migration's scripts and
+- [x] **T-DS-9 — done by `vite-console`.** Manifests and cache inputs.** Result: the migration's scripts and
   dependencies kept, `yaml` at the root, `pnpm-lock.yaml` regenerated after the
   merge, `pnpm verify` running both the existing checks and `check-design`, and
   `DESIGN.md` plus the generator added to the `inputs` of the cacheable tasks
   that actually read them. Depends on: T-DS-8. Verified by: `pnpm verify`.
-- [ ] **T-DS-10 `Spinner.label` call sites.** Result: every caller and test
+- [x] **T-DS-10 — done by `vite-console`.** `Spinner.label` call sites.** Result: every caller and test
   updated for the required prop. Depends on: T-DS-7. Verified by: `pnpm verify`.
-- [ ] **T-DS-11 The real screen.** Result: computed-style measurements on the
+- [x] **T-DS-11 — done by `vite-console`.** The real screen.** Result: computed-style measurements on the
   screen as it exists post-merge, at 375px and desktop, plus screenshots.
   Depends on: T-DS-8. Acceptance: V-DS-19. Verified by: the measurements and
   screenshots in the PR.
 - [ ] **T-DS-12 Paperwork.** Result: `D-UI-6` signed by the owner; archive.
   Depends on: T-DS-11. *Owner.*
+
+> **Phase B landed inside `vite-console` (2026-09-15)**, because the merge order
+> reversed: this change went first, and its primitives render nothing without
+> the stylesheet wiring that lives in the consuming application's tree. Only
+> `T-DS-12` — the owner's signature on `D-UI-6` — remains here.
+>
+> One finding to carry back: **`V-DS-14`'s probes do not detect a missing
+> `@source`.** Measured on the real build — without the directive, `min-h-touch`
+> and `border-line-strong` are still emitted, while the state variants
+> (`hover:bg-accent-hover`, `disabled:bg-accent/55`, `bg-muted/10`) silently
+> vanish. The probe should be a state variant.

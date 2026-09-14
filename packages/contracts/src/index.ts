@@ -13,6 +13,17 @@ export {
 } from './console-error';
 
 export {
+  isOperationInFlight,
+  operationEventSchema,
+  operationSchema,
+  operationStatusSchema,
+  operationTransitionSchema,
+  type Operation,
+  type OperationStatus,
+  type OperationTransition,
+} from './operation';
+
+export {
   DEPLOYMENT_INSTANCE_STATUSES,
   DEPLOYMENT_STATUSES,
   deploymentInstanceStatusSchema,

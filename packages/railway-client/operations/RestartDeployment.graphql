@@ -1,0 +1,6 @@
+# Half of "up", per D-API-5: the cheap half. Revives a stopped deployment in
+# ~8 s and keeps the same deployment id, which is what lets the console tell
+# this start from the previous deployment's leftovers. Observed live.
+mutation RestartDeployment($id: String!) {
+  deploymentRestart(id: $id)
+}

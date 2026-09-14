@@ -54,3 +54,91 @@
 | Q-OPS-1 | medium | me | Can the console spin containers within the same Railway project it is itself deployed to, or does that create a loop worth avoiding?<br><br>→ **Resolved by `D-OPS-1`:** separate projects. It could, and the loop is real — a wrong service id would let the console stop itself. | `_research/2026-09-14-the-brief.md` |
 | Q-OPS-2 | medium | me / **Railway** | Is a deployment that has been stopped (`deploymentStop`) or removed billed for CPU/memory? The pricing and optimize-usage pages do not say; "only charged for the resources you actually use" implies not. Matters for how long the demo can sit stopped between interviews. → **Now checkable:** as of 2026-09-14 15:47 UTC the service `target` sits with a **stopped** deployment (`SUCCESS`/`stopped=true`/`EXITED`) and has run for about ten minutes in total. Reading the usage page a day later separates "billed while stopped" from "billed only while running". | `_research/2026-09-14-railway-operations-and-cost.md` §5 |
 | Q-OPS-3 | medium | me | How does Railway build a *shared* pnpm workspace from the repository root, so that `apps/console` gets its four workspace packages (`D-OPS-2`, ratified 2026-09-14)? `[observed]` from `docs.railway.com/guides/monorepo`, read 2026-09-14: Railway distinguishes *isolated* monorepos (set **Root Directory**; only that directory is pulled) from *shared* ones (build from the root, set a custom **start command** such as `pnpm --filter backend start`); **watch paths** limit which changes trigger a deploy; on import Railway auto-detects pnpm / npm / yarn / bun workspaces and proposes per-package commands. `[to-verify]` whether the detected build command installs at the root and builds the app with its workspace dependencies, or whether `pnpm turbo run build --filter=@repo/console` must be set explicitly; whether the `packageManager` field is honoured (corepack) or the pnpm version must be pinned another way. Closes with the first deploy in `changes/deploy-on-railway/`. | `docs.railway.com/guides/monorepo` |
+
+---
+
+## Registered by `vite-console`, 2026-09-15
+
+### `Q-UI-6` — what is on screen before the first state arrives
+
+*medium · me · open, implemented with a proposed default*
+
+`ux-brief.md` §10 earmarked this number for `first-paint` and did not register
+it. Taken here for exactly that, and widened by one case the brief did not
+consider: **the first read failing.** SSE opens only after a successful
+`GET /api/container/state`, and every automatic refetch is off, so a failed
+first read leaves the reader with no state *and* no stream, permanently.
+
+**Implemented default:** the card with a spinner in place of the headline while
+the read is in flight; on failure, the card with the human sentence and a
+**Try again** control that re-issues the *read* and nothing else. Both are one
+question because both answer "what does this show when it has nothing to show".
+
+### `Q-UI-7` — the `ConsoleError` set is not closed
+
+*medium · me · open, implemented with a proposed default*
+
+`V-CS-8` requires every error body to parse with `consoleErrorSchema`, and the
+schema had five codes while the routes answer eleven conditions.
+`console-misconfigured` was the case that surfaced it — `V-CS-2` names a code
+the schema does not have, so `V-CS-2` and `V-CS-8` could not both pass.
+
+**Implemented default:** the enum gains `console-misconfigured`, `not-found`,
+`unauthorized`, `bad-request`, `forbidden-origin`, `payload-too-large` and
+`no-deployment` (the last for `V-CV-4`). Schema, server, sentences and tests
+move together; a code with no sentence and no test is not in the set.
+
+### `Q-UI-8` — the card's maximum width has no token
+
+*medium · owner · open, and the code currently violates its own rule*
+
+`ux-brief.md` §3 fixes the card at 480 px. `DESIGN.md` has no layout token, and
+`grid.applies` covers `spacing`, `radius` and `spinner.size` only — so the
+screen presently uses `max-w-[30rem]`, an arbitrary value, which is exactly what
+D-3 forbids. It is written down here rather than left as a quiet exception.
+
+**Two ways out.** Add `layout.cardMax: 480px` to `DESIGN.md` — and it is not
+enough to add the value: `scripts/design-tokens.mjs` must emit it, `grid.applies`
+must cover the new subtree so 480 is grid-checked (4 × 120), and the usage check
+must reach it. That is a coordinated edit to `design-system`'s files. Or permit
+composition measures in application CSS, with the exemption written down.
+
+### `Q-SEC-6` — may a Railway message reach the browser?
+
+*low · owner · open, implemented with a proposed default*
+
+`D-API-3`'s post-experiment extension says `kind: 'unknown'` **must** carry
+Railway's `message` through to the UI rather than swallow it. `V-14` says no
+string from a Railway response body may appear in a console response except
+`traceId`. Both are written down, and they contradict each other.
+
+**Implemented default: `V-14` wins.** The message is logged where an operator
+reads it and dropped before the response. If the owner prefers `D-API-3`, the
+change is one branch in `apps/console/src/server/errors.ts`.
+
+### `Q-OPS-4` — what does Railway's image do to a Just-in-Time server?
+
+*medium · me · open, closes with the first deploy*
+
+Three things this change could not establish locally. Does Railpack honour
+`engines.node: ">=22.12"`? Does its edge buffer `text/event-stream` despite
+`x-accel-buffering: no`? And — the one that matters — does anything in the build
+image or runtime disturb the pnpm workspace symlinks that `start` resolves
+through? An earlier draft of the plan asserted this was a hazard; it is not
+established either way, and it is checked against the real image rather than
+guessed at. If it does bite, `D-OPS-4` records the server bundle as the fallback.
+
+### `Q-OPS-5` — fail fast, or stay up and answer 500?
+
+*medium · owner · open, implemented with the written criterion*
+
+`V-55` requires a misconfigured console to refuse to start. `V-CS-2` requires the
+first `GET /api/container/state` to answer `500 console-misconfigured`. A process
+that exits answers nothing, so the two cannot both hold.
+
+**Implemented: fail fast**, because that is the criterion as written, and an
+earlier draft of this work quietly redefined it — which is the thing to avoid.
+`V-CS-2` is marked blocked rather than reported as passing. The alternative, if
+the owner prefers it, is listen-and-degrade plus an explicit readiness endpoint
+and an amended `V-55`.
+
