@@ -32,7 +32,7 @@ where each piece lives and what it may see.
 │   │   └── scripts/check-operations.ts
 │   └── ui/                            @repo/ui — react and nothing else
 │       └── src/  index.ts · tokens.ts · Button.tsx · Badge.tsx · Card.tsx · Spinner.tsx
-├── scripts/check-boundaries.mjs       the rules of §6, as a script
+├── scripts/check-boundaries.mjs       the eight rules of §6, as a script
 ├── openspec/                          unchanged
 ├── .github/workflows/ci.yml
 ├── package.json                       private; packageManager; scripts delegate to turbo
@@ -174,33 +174,54 @@ Just-in-Time contract from the Turborepo docs (`[observed]` 2026-09-14).
 ## 6. The rules, restated for packages
 
 Parent design §2 stated three rules by folder. `scripts/check-boundaries.mjs`
-checks them by package, and CI runs it:
+checks eight by package, and CI runs it. Each rule names the criterion it
+implements, so a failure points at a line in `verification.md` and not at a
+regular expression.
 
 1. The string `backboard.railway.com` appears in exactly one file, and it is
-   under `packages/railway-client/src/`. No `wss://` anywhere. (`V-41`)
-2. Files ending in `.graphql`, and the word `mutation` inside a GraphQL
-   document, exist only under `packages/railway-client/`. (`V-40`, first half;
-   the second half — *only `actions.ts` calls a mutation* — becomes *only
-   `container-core` calls a verb on the provider*, checked by `container-verbs`.)
-3. No source file contains a relative import that leaves its own package
-   (`../../packages/`, `../../apps/`) and no import of `@repo/*/src/`.
+   under `packages/railway-client/src/`. No `wss://` anywhere. (`V-MW-9`,
+   restating `V-41`)
+2. Files ending in `.graphql`, and a GraphQL operation inside a template
+   literal, exist only under `packages/railway-client/`. (`V-MW-10`, restating
+   the first half of `V-40`; the second half — *only `actions.ts` calls a
+   mutation* — becomes *only `container-core` calls a verb on the provider*,
+   checked by `container-verbs`.)
+3. No source file contains a relative import that leaves its own package, and
+   no file imports `@repo/*/…` past a package's `exports` map. (`V-MW-8`,
+   `V-MW-7`)
 4. **The client graph stays clean.** No file under
    `apps/console/src/features/`, no file carrying the `'use client'`
    directive, and nothing under `packages/ui/` imports `@repo/container-core`
    or `@repo/railway-client`. The browser's only workspace imports are
-   `@repo/contracts` and `@repo/ui`.
-5. `@repo/ui` imports nothing from the workspace at all — a `ui` file that
-   names any `@repo/` specifier fails the check.
+   `@repo/contracts` and `@repo/ui`. (`V-MW-25`)
+5. `@repo/ui` knows nothing about the product: no source file under
+   `packages/ui/src/` names a `@repo/` specifier, Railway's host, a `fetch(`
+   call, a `/api/` route, or the word *container*. (`V-MW-22`)
+6. `ContainerState` is declared once. No file outside `packages/contracts/src/`
+   redeclares the union. (`V-MW-15`)
+7. Every `@repo/*` specifier a package's sources name is declared in that
+   package's own `package.json`. (`V-MW-5`)
+8. The workspace dependency graph is acyclic. (`V-MW-5`)
 
-Rule 4 is the one the module system cannot express on its own: `apps/console`
+Rules 4 and 5 are the ones the module system cannot express: `apps/console`
 legitimately depends on all four packages, so nothing stops a client component
 inside it from importing the server's. **Rejected:** the `server-only` package.
 It is the Next.js idiom and it would fail the build precisely, but its export
 map resolves to the throwing module under plain Node, which is how vitest runs
 `container-core` and `railway-client` — the tests would have to opt out of the
 guard that the guard exists to enforce. A grep costs nothing, runs in CI, and
-is proven by break-and-revert. It is worth revisiting when the screen exists
-and the RSC boundary is real.
+is proven by break-and-revert. Worth revisiting when the screen exists and the
+RSC boundary is real.
+
+Rule 7 exists because of something the break-and-revert procedure turned up
+rather than something anticipated. `[observed]` 2026-09-14: a *side-effect*
+import — `import '@repo/railway-client';`, no bindings — raises **no** TS2307
+under `moduleResolution: bundler`, even though the package is undeclared and
+pnpm would refuse to resolve it at run time. A named import from the same
+specifier fails typecheck immediately. So `tsc` alone does not close the
+boundary in every import form, and rule 7 closes it in all of them by reading
+each `package.json` instead of relying on the compiler. Rule 8 falls out of
+the same manifest read for free.
 
 Rule 4's *outcome* is additionally checked at the bundle level by the parent's
 `V-15`, which `console-screen` implements after `next build`.

@@ -7,24 +7,24 @@ renumbered. `build` runs at build or CI time; `unit` needs no network;
 ## The workspace builds and tests from a clean clone
 
 - V-MW-1 `build` — On a clean clone with Node 22 and corepack, `pnpm install --frozen-lockfile && pnpm turbo run check typecheck test build` exits 0 with no `RAILWAY_*` variable set.
-- V-MW-2 `unit` — The test run collects at least the 65 tests present on `main` after PR #4 (64 unit + 1 live, which skips), with the same test names; nothing is lost in the move (diff of the test titles before and after is empty).
-- V-MW-3 `build` — `pnpm turbo run build --filter=@repo/console --dry-run=json` lists exactly `@repo/console#build` and `@repo/railway-client#check`; no package has a `build` task (`D-OPS-3`).
+- V-MW-2 `unit` — `pnpm turbo run test` collects every one of the 64 unit tests present on `main` after PR #4, and `test:live` collects the one live test, which skips. No assertion is lost in the move. Test *titles* change in exactly two places, both enumerated in the PR: the `fromEnv — V-3, V-4` block becomes `credentialFromEnv + targetFromEnv — V-3, V-4` because the function split, and its passphrase case moves to `configFromEnv — V-3, V-4, V-MW-17` in `apps/console` because the passphrase moved.
+- V-MW-3 `build` — In `pnpm turbo run build --filter=@repo/console --dry-run=json`, exactly two tasks carry a real command — `@repo/console#build` (`next build`) and `@repo/railway-client#check` (the operations gate). Every other node in the graph reports `<NONEXISTENT>`: no package defines a `build` (`D-OPS-3`).
 - V-MW-4 `build` — `git ls-files | grep -c package-lock.json` is 0 and `pnpm-lock.yaml` is tracked.
 - V-MW-26 `build` — Every workspace package and the app declares a `typecheck` script, and `pnpm turbo run typecheck` runs one task per package (`D-OPS-3` as amended: pnpm's resolution is not a type check).
 
 ## Boundaries are enforced by the module system, not by prose
 
-- V-MW-5 `unit` — `packages/container-core/package.json` declares no dependency on `@repo/railway-client`, `next`, `react` or `graphql`; adding `import '@repo/railway-client'` to any file in `container-core` makes `pnpm turbo run typecheck` fail with a module-resolution error (procedure: add, run, remove, run).
+- V-MW-5 `unit` — `packages/container-core/package.json` declares no dependency on `@repo/railway-client`, `next`, `react` or `graphql`; adding `import { createRailwayProvider } from '@repo/railway-client'` to any file in `container-core` makes `pnpm turbo run typecheck` fail with `TS2307` (procedure: add, run, remove, run). **A side-effect import of the same specifier does not** — `[observed]` 2026-09-14, `tsc` raises nothing for `import '@repo/railway-client';` with no bindings — which is why design §6 rule 7 checks every `@repo/*` specifier against the importing package's own manifest, and rule 8 checks the resulting graph for cycles. Both are proven by break-and-revert.
 - V-MW-6 `unit` — `packages/contracts/package.json` declares `zod` and nothing else under `dependencies`.
 - V-MW-7 `unit` — `import x from '@repo/railway-client/src/transport'` from `apps/console` fails typecheck: every package's `exports` map exposes `.` only (procedure as in V-MW-5).
-- V-MW-8 `build` — `node scripts/check-boundaries.mjs` exits 0 on the tree; it exits non-zero when any rule in design §6 is broken (procedures: copy the host string into `apps/console`; add a `.graphql` file under `container-core`; add `../../packages/contracts/src/index` as an import — each fails, each reverted passes).
+- V-MW-8 `build` — `node scripts/check-boundaries.mjs` exits 0 on the tree and non-zero when **any one** of the eight rules in design §6 is broken. One break-and-revert procedure per rule, all eight logged in the PR.
 - V-MW-9 `build` — Restated `V-41`: `backboard.railway.com` occurs in exactly one source file, under `packages/railway-client/src/`; `wss://` occurs nowhere under `apps/` or `packages/`.
 - V-MW-10 `build` — Restated `V-40` (first half): `.graphql` files and the token `mutation` inside a GraphQL document occur only under `packages/railway-client/`.
 
 ## The presentation package knows nothing about the product
 
 - V-MW-21 `unit` — `packages/ui/package.json` declares `react` as a peer dependency and lists **no** `@repo/*` dependency of any kind.
-- V-MW-22 `build` — No file under `packages/ui/` contains the substring `@repo/`, `backboard`, `fetch(`, `/api/`, or the word `container` (design §6 rule 5); adding `import '@repo/contracts'` to a `ui` component makes `node scripts/check-boundaries.mjs` exit non-zero (break-and-revert).
+- V-MW-22 `build` — No **source** file under `packages/ui/src/` contains the substring `@repo/`, `backboard`, `fetch(`, `/api/`, or the word `container` (design §6 rule 5; the package's own `package.json` names itself and is not a source file). Adding `import '@repo/contracts'` to a `ui` component makes `node scripts/check-boundaries.mjs` exit non-zero (break-and-revert).
 - V-MW-24 `unit` — `Button`, `Badge`, `Card` and `Spinner` each render under `jsdom` from props alone, with no provider and no context; `Button` forwards `onClick` and honours `disabled`.
 - V-MW-25 `build` — Design §6 rule 4: no file under `apps/console/src/features/`, no file carrying `'use client'`, and nothing under `packages/ui/` imports `@repo/container-core` or `@repo/railway-client`; adding such an import to a `'use client'` file makes the boundary script exit non-zero (break-and-revert). This is the static half of parent `V-15`, whose bundle half `console-screen` adds after `next build`.
 

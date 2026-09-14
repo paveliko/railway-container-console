@@ -200,10 +200,78 @@ const fail = (rule, criterion, detail) => problems.push(`${rule} (${criterion}):
   }
 }
 
+// ---------------------------------------------------------------------------
+// Rule 7 — every @repo/* a package imports is declared in its package.json.
+// V-MW-5's backstop. pnpm and tsc between them catch almost all of this, but
+// writing the break-and-revert procedure showed one form that escapes both: a
+// side-effect `import '@repo/railway-client';` with no bindings raises no
+// TS2307, so nothing complains until the module is actually loaded.
+// ---------------------------------------------------------------------------
+const WORKSPACE_DEPENDENCIES = new Map();
+{
+  const packageDirs = [];
+  for (const root of SEARCH_ROOTS) {
+    for (const entry of readdirSync(join(ROOT, root))) {
+      const dir = `${root}/${entry}`;
+      if (statSync(join(ROOT, dir)).isDirectory()) packageDirs.push(dir);
+    }
+  }
+
+  const nameOf = new Map();
+  for (const dir of packageDirs) {
+    const manifest = JSON.parse(readFileSync(join(ROOT, dir, 'package.json'), 'utf8'));
+    nameOf.set(dir, manifest.name);
+    const declared = new Set([
+      ...Object.keys(manifest.dependencies ?? {}),
+      ...Object.keys(manifest.devDependencies ?? {}),
+      ...Object.keys(manifest.peerDependencies ?? {}),
+    ]);
+    WORKSPACE_DEPENDENCIES.set(
+      manifest.name,
+      [...declared].filter((d) => d.startsWith('@repo/')),
+    );
+
+    for (const file of files) {
+      if (!file.path.startsWith(`${dir}/`)) continue;
+      for (const match of file.text.matchAll(/['"](@repo\/[^'"/]+)/g)) {
+        const imported = match[1];
+        if (imported !== manifest.name && !declared.has(imported)) {
+          fail(
+            'rule 7',
+            'V-MW-5',
+            `${file.path} imports ${imported}, which ${manifest.name} does not declare`,
+          );
+        }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rule 8 — the workspace dependency graph is acyclic. D-OPS-2 permits exactly
+  // one direction; a cycle would make "which package may know what" unanswerable.
+  // ---------------------------------------------------------------------------
+  const visiting = new Set();
+  const done = new Set();
+  const walk = (name, trail) => {
+    if (done.has(name)) return;
+    if (visiting.has(name)) {
+      fail('rule 8', 'V-MW-5', `dependency cycle: ${[...trail, name].join(' → ')}`);
+      return;
+    }
+    visiting.add(name);
+    for (const next of WORKSPACE_DEPENDENCIES.get(name) ?? []) {
+      walk(next, [...trail, name]);
+    }
+    visiting.delete(name);
+    done.add(name);
+  };
+  for (const name of WORKSPACE_DEPENDENCIES.keys()) walk(name, []);
+}
+
 if (problems.length > 0) {
   console.error(`Boundary check failed — ${problems.length} problem(s):`);
   for (const problem of problems) console.error(`  - ${problem}`);
   process.exit(1);
 }
 
-console.log(`Boundary check passed: ${files.length} source file(s), 6 rules.`);
+console.log(`Boundary check passed: ${files.length} source file(s), 8 rules.`);

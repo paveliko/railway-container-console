@@ -85,12 +85,16 @@ Ordered. Nothing below the line starts before the line is crossed.
       (`D-OPS-1`), primary user (`D-UI-4`), polling over subscriptions
       (`D-API-7`, which supersedes `D-API-1`), and the rest.
 - [ ] **Demo passphrase or not** — `Q-SEC-4`.
-- [ ] **Sign the workspace shape** — `D-OPS-2` (three packages and one app,
-      `contracts ← container-core ← railway-client ← console`) and `D-OPS-3`
-      (packages consumed from source, no `dist/`); answer `Q-UI-5` (where the
-      two Railway status enums live) and `Q-SEC-5` (who reads the environment).
-      Until then no file moves.
-      Specified in [`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/).
+- [x] **Sign the workspace shape** — done 2026-09-14. `D-OPS-2` (four packages
+      and one app, `contracts ← container-core ← railway-client`, plus `ui`)
+      and `D-OPS-3` (packages consumed from source, no `dist/`, a `typecheck`
+      per package) are `ratified`, each with an owner's amendment recorded in
+      place. Implemented in
+      [`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/).
+- [ ] **Answer `Q-UI-5` and `Q-SEC-5`** — where the two Railway status enums
+      live, and who reads the environment. Both were left open at ratification;
+      the code applies each question's registered default and marks it at the
+      point of use, so either is a local edit to reverse.
 
 **Ask Railway** (the posting says to — `R-7`): `Q-API-4` token type;
 `Q-API-7` — is a project token meant to be unable to subscribe, is a
@@ -123,18 +127,45 @@ what the customers page actually says. Update the `[to-verify]` marks.
       [`tasks.md`](openspec/changes/railway-container-control/tasks.md) is the
       index of what moved where.
 
-Nothing that is code can start today: every child change waits on a signature.
+The workspace itself is no longer waiting: `D-OPS-2` and `D-OPS-3` are signed
+and the move has landed. What still waits on a signature is the product —
+`Q-API-2` decides what *spin down* does, and no verb is written before it.
 
 ---
 
 ## How the repository is organised
+
+A pnpm workspace driven by Turborepo — `D-OPS-2`. One deployable, four
+packages, one permitted direction of dependency.
+
+```
+apps/
+└── console/           @repo/console         Next.js — the only thing that ships
+packages/
+├── contracts/         @repo/contracts       Zod schemas + the types inferred from them
+├── container-core/    @repo/container-core  state, poller, the ContainerProvider port
+├── railway-client/    @repo/railway-client  the only code that knows Railway exists
+└── ui/                @repo/ui              Button · Badge · Card · Spinner — react and nothing else
+scripts/
+└── check-boundaries.mjs   the eight rules pnpm and the exports maps cannot see
+```
+
+```
+contracts  ←  container-core  ←  railway-client        ui   (react only)
+    ↑               ↑                  ↑                ↑
+    └───────────────┴──── console ─────┴────────────────┘
+```
+
+`container-core` declares the port; `railway-client` implements it. That is
+what keeps the domain testable without a token — and what makes a boundary
+crossing a resolution error rather than a review comment.
 
 ```
 openspec/
 ├── _research/         source material — every claim marked [observed] / [inferred] / [to-verify]
 ├── changes/
 │   ├── railway-container-control/   the parent: proposal, design, 60 criteria (V-N), tasks as an index
-│   ├── monorepo-workspace/          pnpm + Turborepo, three packages, the provider port — blocks all code
+│   ├── monorepo-workspace/          the workspace above — signed, implemented
 │   ├── container-verbs/             up() / down() — blocked on Q-API-2
 │   ├── console-server/              runtime, four routes, SSE, fake Railway
 │   ├── console-screen/              the one screen
@@ -150,16 +181,30 @@ are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Running it
 
+Node 22 and pnpm 10 — `corepack enable` picks the version up from
+`packageManager`.
+
 ```bash
-npm install
-npm test          # 65 tests, no network; the one live test skips without a token
-npm run build     # validates the GraphQL documents against the schema excerpt first
+pnpm install
+pnpm test         # 90 tests across five packages, no network
+pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
+pnpm check        # the GraphQL operations gate, then the eight boundary rules
+pnpm build        # runs the operations gate first, then next build
+pnpm dev          # Next.js at apps/console, packages picked up from source
+```
+
+None of the above needs a Railway token, and CI has none. The one test that
+would talk to Railway is a separate, uncached task that is not part of `test`
+and not part of CI:
+
+```bash
+pnpm test:live    # skips itself unless .env.local has the five RAILWAY_* variables
 ```
 
 The screen is still a placeholder — it needs the two verbs, which need
 `Q-API-2`. To point the client layer at a real container, copy `.env.example`
-to `.env.local` and fill in the five `RAILWAY_*` variables. The token never
-leaves the server and never enters this repository.
+to `.env.local` at the repository root and fill in the five `RAILWAY_*`
+variables. The token never leaves the server and never enters this repository.
 
 ---
 
