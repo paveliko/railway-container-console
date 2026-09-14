@@ -37,7 +37,7 @@ check with a stated procedure, and it passes or fails. `unit` needs no network;
 
 ## Keeping state current — `D-API-7`
 
-- V-21 `live` — One read with the project token returns a `ContainerView` that `deriveContainerState` maps to a phase without falling to row 13.
+- V-21 `live` — One read with the project token returns a `ContainerView` that `deriveContainerState` maps to a phase without falling to row 13. Skipped, not failed, when no token is present.
 - V-22 `unit` — With no transition in flight the poller issues one read per 30 s (fake clock, 10 simulated minutes → 20 reads, ±1).
 - V-23 `unit` — On an accepted mutation the poller switches to 2 s; on reaching a terminal phase it returns to 30 s; with no terminal phase it returns to 30 s after 90 s.
 - V-24 `unit` — Two identical consecutive reads produce **one** SSE event, not two: states are de-duplicated by value.
