@@ -8,7 +8,7 @@
  * the full-precision ratio rather than the printed one, and fails if the
  * generated files have drifted from the block they came from.
  *
- * `--self-test` runs the fixtures under `scripts/__fixtures__/`, which exist so
+ * `--self-test` runs the fixtures under `scripts/__fixtures__/design/`, which exist
  * that each failure mode is proved to fail. A check whose red path is untested
  * is not a guarantee.
  */
@@ -260,7 +260,7 @@ function run(root) {
 const selfTest = process.argv.includes('--self-test');
 
 if (selfTest) {
-  const dir = join(ROOT, 'scripts/__fixtures__');
+  const dir = join(ROOT, 'scripts/__fixtures__/design');
   let failures = 0;
   for (const name of readdirSync(dir).sort()) {
     const expected = readFileSync(join(dir, name, 'expect.txt'), 'utf8').trim();
