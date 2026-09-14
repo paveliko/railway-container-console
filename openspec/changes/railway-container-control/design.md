@@ -118,7 +118,7 @@ RAILWAY_TOKEN=
 RAILWAY_PROJECT_ID=
 RAILWAY_ENVIRONMENT_ID=
 RAILWAY_SERVICE_ID=
-CONSOLE_PASSPHRASE=                 # only if Q-SEC-4 says yes; absent = no gate
+CONSOLE_PASSPHRASE=                 # set on the demo (D-SEC-2); absent = no gate
 ```
 
 The kind is declared, not inferred. The recommended kind is `project` — least
@@ -359,7 +359,7 @@ HTTP status per error: `409` in-flight · `429` rate-limited (with the same
 `Retry-After`) · `502` not-authorized, rejected · `503` unavailable. No Railway
 response body is forwarded verbatim. The `traceId` is.
 
-If `CONSOLE_PASSPHRASE` is set (`Q-SEC-4`), the two `POST` routes require a
+If `CONSOLE_PASSPHRASE` is set (`D-SEC-2` sets it on the demo), the two `POST` routes require a
 cookie set by a `POST /api/session` that checks it; the two `GET` routes stay
 open — reading state is harmless. If it is unset, there is no gate.
 

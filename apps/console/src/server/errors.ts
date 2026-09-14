@@ -10,9 +10,12 @@
  * One rule governs all of it: no string from a Railway response body crosses to
  * the browser. `traceId` is the single exception, and it is an identifier, not
  * prose (`V-14`). Railway's own message is logged, where an operator can read
- * it, and dropped. That `D-API-3`'s extension argues the opposite for
- * `kind: 'unknown'` is a real disagreement between two written rules, and it is
- * registered as `Q-SEC-6` rather than settled quietly here.
+ * it, and dropped.
+ *
+ * `D-API-3` once argued the opposite for `kind: 'unknown'`, and that
+ * disagreement was registered as `Q-SEC-6` rather than settled quietly here.
+ * It was settled on 2026-09-15: `V-14` wins, `D-API-3` is amended, and the
+ * clause is withdrawn. This file did not change; only the question did.
  */
 
 import type { ConsoleError, ConsoleErrorCode } from '@repo/contracts';

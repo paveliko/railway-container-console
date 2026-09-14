@@ -1,8 +1,9 @@
 /**
- * The optional passphrase gate. `Q-SEC-4` is unsigned, so `CONSOLE_PASSPHRASE`
- * is absent by default and there is no gate at all; when it is set, the two
+ * The passphrase gate. `D-SEC-2` (resolving `Q-SEC-4`) sets
+ * `CONSOLE_PASSPHRASE` on the deployed demo, so there the gate is on: the two
  * mutating routes require a cookie and the two reading routes stay open,
- * because reading state harms nobody.
+ * because reading state harms nobody. The variable stays optional in code and
+ * is normally absent in local development, where there is nothing to protect.
  *
  * The cookie is an HMAC over its own expiry, not a random token in a table:
  * this process has no store, and a value that carries its own deadline cannot

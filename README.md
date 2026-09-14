@@ -84,7 +84,13 @@ Ordered. Nothing below the line starts before the line is crossed.
       [`decisions.md`](openspec/decisions.md) — stack (`D-UI-2`), topology
       (`D-OPS-1`), primary user (`D-UI-4`), polling over subscriptions
       (`D-API-7`, which supersedes `D-API-1`), and the rest.
-- [ ] **Demo passphrase or not** — `Q-SEC-4`.
+- [x] **Demo passphrase or not** — answered 2026-09-15. `D-SEC-2`: the deployed
+      demo **is** gated. `CONSOLE_PASSPHRASE` is set on the console service, so
+      the two mutating routes (`POST /api/container/up` and `/down`) require a
+      session cookie obtained from `POST /api/session`; reading state and the
+      SSE stream stay open to anyone with the link. The passphrase itself is
+      **not in this repository** — it is public — and travels privately with
+      the demo link. `Q-SEC-4` closed.
 - [x] **Sign the workspace shape** — done 2026-09-14. `D-OPS-2` (four packages
       and one app, `contracts ← container-core ← railway-client`, plus `ui`)
       and `D-OPS-3` (packages consumed from source, no `dist/`, a `typecheck`

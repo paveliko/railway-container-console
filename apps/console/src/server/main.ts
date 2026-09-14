@@ -18,11 +18,12 @@ const port = Number(process.env.PORT ?? 3000);
  * Fail fast, and say which variable.
  *
  * `V-55` asks a misconfigured console to refuse to start rather than come up
- * and fail later, and this is that refusal. It does mean `V-CS-2` — the first
- * read answering `500 console-misconfigured` — cannot also hold, because a
- * process that exits answers nothing. The two criteria genuinely conflict; the
- * written one wins until the owner settles `Q-OPS-5`, and the conflict is
- * recorded rather than resolved by quietly changing behaviour.
+ * and fail later, and this is that refusal. It meant `V-CS-2` — the first read
+ * answering `500 console-misconfigured` — could not also hold, because a
+ * process that exits answers nothing. That conflict was registered as
+ * `Q-OPS-5` rather than resolved by quietly changing behaviour, and the owner
+ * settled it on 2026-09-15: `D-OPS-6` keeps this refusal, and `V-CS-2` is
+ * reworded to the mapping it actually tests. The behaviour below is unchanged.
  */
 try {
   getRuntime();
