@@ -34,7 +34,6 @@ where each piece lives and what it may see.
 │       └── src/  index.ts · tokens.ts · Button.tsx · Badge.tsx · Card.tsx · Spinner.tsx
 ├── scripts/check-boundaries.mjs       the eight rules of §6, as a script
 ├── openspec/                          unchanged
-├── .github/workflows/ci.yml
 ├── package.json                       private; packageManager; scripts delegate to turbo
 ├── pnpm-workspace.yaml                apps/* · packages/*
 ├── turbo.json
@@ -226,14 +225,58 @@ the same manifest read for free.
 Rule 4's *outcome* is additionally checked at the bundle level by the parent's
 `V-15`, which `console-screen` implements after `next build`.
 
-## 7. CI
+## 7. Verification runs locally
 
-`.github/workflows/ci.yml`: `pnpm/action-setup` reading the version from
-`packageManager`, Node 22, `pnpm install --frozen-lockfile`, then `pnpm turbo
-run check typecheck test build`. No secrets, and none are needed: `test:live`
-is not in that list, the live test skips itself when unconfigured, and the
-build must succeed with no `RAILWAY_*` set — a requirement the `console-server`
-change carries forward for the runtime singleton.
+There is no CI workflow, and no `.github/` directory. The gate is one command
+at the repository root:
+
+```bash
+pnpm verify        # check (operations gate + the eight boundary rules), then
+                   # typecheck, test and build, in dependency order
+```
+
+**Rejected:** a GitHub Actions workflow running the same four tasks. It was
+written, and it is removed by the owner's decision. Two reasons stand behind
+that, and only the first is about this repository: the account's Actions
+minutes are not currently available, so a workflow here is a permanently red
+check that teaches a reviewer to ignore red checks — which is worse than no
+check at all. The second is that everything the workflow did is reproducible
+by anyone with the repository, because the tasks are hermetic: no secret, no
+network, no Railway. `pnpm verify` on a clean clone is the same gate.
+
+**What is given up, stated plainly.** Nothing now runs the checks except a
+person choosing to run them, so a pull request can be opened with the tree
+broken and nothing will say so. The mitigation is that the command is one word
+and that `verify` is named in the README's *Running it* section as the thing to
+run before pushing. **Becomes a workflow again** when Actions is available: the
+file is four steps — `pnpm/action-setup`, Node 22, `pnpm install
+--frozen-lockfile`, `pnpm verify` — and it needs no secret, because `test:live`
+is a separate task that is not part of `verify`.
+
+`test:live` stays outside `verify` for that reason: it is the only task that
+would reach Railway, it is declared `"cache": false`, and it skips itself when
+the five `RAILWAY_*` variables are absent.
+
+## 7a. Turborepo inputs — what invalidates what
+
+Two files the tasks genuinely depend on live outside any package, so Turborepo
+cannot infer them:
+
+```jsonc
+"globalDependencies": ["tsconfig.base.json"],          // every task
+"check": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/openspec/_research/railway-schema-excerpt.graphql"] }
+```
+
+Without the first, editing the shared compiler options does not change any
+`typecheck` hash and the cache replays a stale pass. Without the second, editing
+the schema excerpt does not change `railway-client#check` and the operations
+gate — whose entire purpose is to notice that the schema and the documents have
+drifted apart — reports success from cache without re-reading the schema.
+`$TURBO_ROOT$` keeps the excerpt scoped to the one task that reads it rather
+than making it global, so a schema edit does not invalidate the test suites.
+
+Both were `[observed]` on 2026-09-14 by comparing `--dry-run=json` hashes
+before and after an edit; both are verified the same way, in `V-MW-27`.
 
 ## 8. Amendments to the parent change
 

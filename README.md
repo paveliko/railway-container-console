@@ -186,16 +186,23 @@ Node 22 and pnpm 10 — `corepack enable` picks the version up from
 
 ```bash
 pnpm install
-pnpm test         # 90 tests across five packages, no network
-pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
+pnpm verify       # everything below, in dependency order — run this before pushing
+```
+
+There is no CI workflow; `pnpm verify` is the gate, and it is hermetic — no
+secret, no network, no Railway — so it gives the same answer on any clean
+clone. Its parts, when you want one on its own:
+
+```bash
 pnpm check        # the GraphQL operations gate, then the eight boundary rules
+pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
+pnpm test         # 90 tests across five packages
 pnpm build        # runs the operations gate first, then next build
 pnpm dev          # Next.js at apps/console, packages picked up from source
 ```
 
-None of the above needs a Railway token, and CI has none. The one test that
-would talk to Railway is a separate, uncached task that is not part of `test`
-and not part of CI:
+The one test that would talk to Railway is a separate, uncached task, kept out
+of `verify` so that it can only run when asked for by name:
 
 ```bash
 pnpm test:live    # skips itself unless .env.local has the five RAILWAY_* variables

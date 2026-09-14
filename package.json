@@ -12,6 +12,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "turbo run check && node scripts/check-boundaries.mjs",
+    "verify": "pnpm run check && turbo run typecheck test build",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "test:live": "turbo run test:live"
   },

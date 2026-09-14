@@ -11,6 +11,7 @@ renumbered. `build` runs at build or CI time; `unit` needs no network;
 - V-MW-3 `build` — In `pnpm turbo run build --filter=@repo/console --dry-run=json`, exactly two tasks carry a real command — `@repo/console#build` (`next build`) and `@repo/railway-client#check` (the operations gate). Every other node in the graph reports `<NONEXISTENT>`: no package defines a `build` (`D-OPS-3`).
 - V-MW-4 `build` — `git ls-files | grep -c package-lock.json` is 0 and `pnpm-lock.yaml` is tracked.
 - V-MW-26 `build` — Every workspace package and the app declares a `typecheck` script, and `pnpm turbo run typecheck` runs one task per package (`D-OPS-3` as amended: pnpm's resolution is not a type check).
+- V-MW-27 `build` — A task's cache key covers the files outside its package that it actually reads. Procedure, for each: record the task hash from `--dry-run=json`, append a newline to the file, record the hash again, revert, record again. Appending to `tsconfig.base.json` must change every `typecheck` hash; appending to `openspec/_research/railway-schema-excerpt.graphql` must change `@repo/railway-client#check` and must **not** change any `test` hash — `$TURBO_ROOT$` keeps it scoped to the one task that reads it. Both hashes return to their original value on revert.
 
 ## Boundaries are enforced by the module system, not by prose
 
@@ -26,7 +27,7 @@ renumbered. `build` runs at build or CI time; `unit` needs no network;
 - V-MW-21 `unit` — `packages/ui/package.json` declares `react` as a peer dependency and lists **no** `@repo/*` dependency of any kind.
 - V-MW-22 `build` — No **source** file under `packages/ui/src/` contains the substring `@repo/`, `backboard`, `fetch(`, `/api/`, or the word `container` (design §6 rule 5; the package's own `package.json` names itself and is not a source file). Adding `import '@repo/contracts'` to a `ui` component makes `node scripts/check-boundaries.mjs` exit non-zero (break-and-revert).
 - V-MW-24 `unit` — `Button`, `Badge`, `Card` and `Spinner` each render under `jsdom` from props alone, with no provider and no context; `Button` forwards `onClick` and honours `disabled`.
-- V-MW-25 `build` — Design §6 rule 4: no file under `apps/console/src/features/`, no file carrying `'use client'`, and nothing under `packages/ui/` imports `@repo/container-core` or `@repo/railway-client`; adding such an import to a `'use client'` file makes the boundary script exit non-zero (break-and-revert). This is the static half of parent `V-15`, whose bundle half `console-screen` adds after `next build`.
+- V-MW-25 `build` — Design §6 rule 4: starting from every client entry point — any file carrying `'use client'`, everything under `apps/console/src/features/`, everything under `packages/ui/` — the **transitive** import graph reaches neither `@repo/container-core` nor `@repo/railway-client`. Checking direct imports only is not enough and was not enough: `[observed]` 2026-09-14, a `'use client'` component importing a local helper that imports `@repo/railway-client` put the server package in the client graph and passed. Procedures, each reverted: the one-hop import, the two-hop import through a local helper, and a four-hop chain that passes *through* the permitted `@repo/contracts` — each must fail and name the chain. This is the static half of parent `V-15`, whose bundle half `console-screen` adds after `next build`.
 
 ## The port replaces the cycle
 
@@ -45,10 +46,10 @@ renumbered. `build` runs at build or CI time; `unit` needs no network;
 - V-MW-17 `unit` — `apps/console/src/server/config.ts` is the only file that reads `CONSOLE_PASSPHRASE` (grep).
 - V-MW-18 `build` — `tsconfig.base.json` sets `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` to `true`, and `pnpm turbo run typecheck` passes.
 
-## CI, and the one task that talks to Railway
+## The local gate, and the one task that talks to Railway
 
-- V-MW-19 `manual` — A pull request to `main` runs the workflow in design §7 and shows it green, with no repository secret referenced anywhere in the workflow file.
-- V-MW-23 `build` — `test:live` is declared `"cache": false` in `turbo.json`, is not referenced by any root `package.json` script, and does not appear in `.github/workflows/ci.yml`; running it without `RAILWAY_*` set reports the live test as skipped, not failed (parent `V-21`).
+- V-MW-19 `build` — `pnpm verify` is the whole gate and exits 0 on a clean clone with no `RAILWAY_*` variable set: the operations gate, the eight boundary rules, `typecheck`, `test` and `build`, in dependency order. There is no `.github/` directory in the repository (`git ls-files .github` is empty) — design §7 records why the workflow was written and then removed, and what is given up by removing it.
+- V-MW-23 `build` — `test:live` is declared `"cache": false` in `turbo.json` and is not part of `pnpm verify`; it is reachable only by asking for it by name. Running it without `RAILWAY_*` set reports the live test as skipped, not failed (parent `V-21`).
 - V-MW-20 `manual` — `pnpm dev` from the root starts Next.js at `apps/console`, serves the placeholder page, and an edit to `packages/contracts/src/container-state.ts` is picked up without restarting (Just-in-Time, `D-OPS-3`).
 
 ## Parent criteria that must still pass, unchanged

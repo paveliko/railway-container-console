@@ -137,24 +137,132 @@ const fail = (rule, criterion, detail) => problems.push(`${rule} (${criterion}):
 // ---------------------------------------------------------------------------
 // Rule 4 — the server packages stay out of the client import graph.
 // V-MW-25, and the static half of the parent's V-15.
+//
+// This walks the graph rather than reading one file at a time. A direct
+// `'use client'` → `@repo/railway-client` is the obvious way to break the
+// boundary and not the likely one; the likely one is a client component
+// importing a local helper that imports the server package two hops away. That
+// puts the module in the browser bundle just as surely, and a per-file grep
+// cannot see it.
 // ---------------------------------------------------------------------------
 {
-  const SERVER_PACKAGES = ['@repo/container-core', '@repo/railway-client'];
-  for (const file of files) {
-    const isFeature = file.path.startsWith('apps/console/src/features/');
-    const isUi = file.path.startsWith('packages/ui/');
-    const isClientComponent = /^\s*(['"])use client\1/m.test(file.text);
-    if (!isFeature && !isUi && !isClientComponent) continue;
+  const SERVER_PACKAGES = new Set(['@repo/container-core', '@repo/railway-client']);
+  const byPath = new Map(files.map((f) => [f.path, f]));
 
-    for (const server of SERVER_PACKAGES) {
-      if (new RegExp(`['"]${server}(?:/|['"])`).test(file.text)) {
-        fail(
-          'rule 4',
-          'V-MW-25',
-          `${file.path} is in the client graph and imports ${server}; ` +
-            'the browser sees @repo/contracts and @repo/ui only',
-        );
+  /** Where a package name's `exports["."]` points, as a repo-relative path. */
+  const packageEntry = new Map();
+  /** Which package a file belongs to. */
+  const packageOfDir = new Map();
+  for (const root of SEARCH_ROOTS) {
+    for (const entry of readdirSync(join(ROOT, root))) {
+      const dir = `${root}/${entry}`;
+      if (!statSync(join(ROOT, dir)).isDirectory()) continue;
+      const manifest = JSON.parse(readFileSync(join(ROOT, dir, 'package.json'), 'utf8'));
+      packageOfDir.set(dir, manifest.name);
+      const main = manifest.exports?.['.'];
+      if (typeof main === 'string') {
+        packageEntry.set(manifest.name, `${dir}/${main.replace(/^\.\//, '')}`);
       }
+    }
+  }
+
+  const packageOf = (path) => packageOfDir.get(path.split('/').slice(0, 2).join('/'));
+
+  const CANDIDATE_SUFFIXES = ['', '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx'];
+
+  /** A specifier as written → a file in this repository, or null if it leaves it. */
+  function resolve(fromPath, specifier) {
+    if (specifier.startsWith('.')) {
+      const base = relative(ROOT, join(join(ROOT, fromPath), '..', specifier))
+        .split(sep)
+        .join('/');
+      for (const suffix of CANDIDATE_SUFFIXES) {
+        if (byPath.has(base + suffix)) return base + suffix;
+      }
+      return null;
+    }
+    const entry = packageEntry.get(specifier);
+    return entry !== undefined && byPath.has(entry) ? entry : null;
+  }
+
+  /** Every specifier a file names, in any import form. */
+  function specifiersOf(file) {
+    const patterns = [
+      /(?:^|\n)\s*(?:import|export)[\s\S]{0,200}?from\s+['"]([^'"]+)['"]/g,
+      /(?:^|\n)\s*import\s+['"]([^'"]+)['"]/g,
+      /\b(?:import|require)\(\s*['"]([^'"]+)['"]\s*\)/g,
+    ];
+    return patterns.flatMap((pattern) => [...file.text.matchAll(pattern)].map((m) => m[1]));
+  }
+
+  // Seeds: everything the browser is known to load.
+  const seeds = files.filter(
+    (f) =>
+      /^\s*(['"])use client\1/m.test(f.text) ||
+      f.path.startsWith('apps/console/src/features/') ||
+      f.path.startsWith('packages/ui/'),
+  );
+
+  const arrivedFrom = new Map();
+  const queue = [];
+  for (const seed of seeds) {
+    if (arrivedFrom.has(seed.path)) continue;
+    arrivedFrom.set(seed.path, null);
+    queue.push(seed.path);
+  }
+
+  const chainTo = (path) => {
+    const chain = [];
+    for (let at = path; at !== undefined && at !== null; at = arrivedFrom.get(at)) chain.unshift(at);
+    return chain.join(' → ');
+  };
+
+  const reported = new Set();
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const file = byPath.get(path);
+    if (file === undefined) continue;
+
+    for (const specifier of specifiersOf(file)) {
+      const packageName = specifier.startsWith('@repo/')
+        ? specifier.split('/').slice(0, 2).join('/')
+        : undefined;
+
+      if (packageName !== undefined && SERVER_PACKAGES.has(packageName)) {
+        const key = `${path} ${packageName}`;
+        if (!reported.has(key)) {
+          reported.add(key);
+          fail(
+            'rule 4',
+            'V-MW-25',
+            `${packageName} is reachable from the client graph: ${chainTo(path)} → ` +
+              `${packageName}; the browser sees @repo/contracts and @repo/ui only`,
+          );
+        }
+        continue;
+      }
+
+      const next = resolve(path, specifier);
+      if (next === null || arrivedFrom.has(next)) continue;
+
+      const owner = packageOf(next);
+      if (owner !== undefined && SERVER_PACKAGES.has(owner)) {
+        arrivedFrom.set(next, path);
+        const key = `${next} ${owner}`;
+        if (!reported.has(key)) {
+          reported.add(key);
+          fail(
+            'rule 4',
+            'V-MW-25',
+            `${owner} is reachable from the client graph: ${chainTo(next)}; ` +
+              'the browser sees @repo/contracts and @repo/ui only',
+          );
+        }
+        continue;
+      }
+
+      arrivedFrom.set(next, path);
+      queue.push(next);
     }
   }
 }

@@ -26,7 +26,7 @@ whom is stated.
 
 - [x] **T-MW-3.1 Boundary script.** Result: `scripts/check-boundaries.mjs` implementing design §6 — eight rules; writing the break-and-revert procedure turned up a gap `tsc` leaves open (a side-effect import of an undeclared package raises no error) and rules 7 and 8 close it — run by the root `check` script. Depends on: T-MW-2.5. Acceptance: V-MW-7, V-MW-8, V-MW-22, V-MW-25. Verified by: the break-and-revert procedures, logged in the PR.
 - [x] **T-MW-3.2 Fixture round-trip test.** Result: a test in `container-core` that runs every deployment-shaped frame of the recorded experiment through derive → JSON → `containerStateSchema.parse`. Depends on: T-MW-2.2. Acceptance: V-MW-13. Verified by: `pnpm test`.
-- [x] **T-MW-3.3 CI.** Result: `.github/workflows/ci.yml` per design §7, with no secrets and without `test:live`. Depends on: T-MW-3.1. Acceptance: V-MW-19, V-MW-23; V-MW-2 (test titles before/after compared in the PR description). Verified by: the green run on the PR.
+- [x] **T-MW-3.3 One local gate.** Result: a root `verify` script running the operations gate, the boundary rules, `typecheck`, `test` and `build`; `globalDependencies` and `$TURBO_ROOT$` inputs so that `tsconfig.base.json` and the schema excerpt actually invalidate the tasks that read them; **no `.github/` directory** — design §7 records why the workflow was written and then removed. Depends on: T-MW-3.1. Acceptance: V-MW-23, V-MW-27; V-MW-2 (test titles before/after compared in the PR description). Verified by: `pnpm verify` on a clean clone, and the hash comparisons in V-MW-27.
 
 ## T-MW-4 · Paperwork
 

@@ -101,7 +101,7 @@ build step, not the type check.
 | Boundary enforcement | pnpm strict resolution, `exports` maps, one root script for the rules the module system cannot see | ESLint `no-restricted-imports`, `dependency-cruiser` |
 | Package consumption | Just-in-Time: `exports` → `src/*.ts(x)`, transpiled by Next.js and run from source by vitest (`D-OPS-3`) | compiled `dist/` when a consumer needs plain JavaScript |
 | Runtime validation | Zod schemas in `contracts` for the two shapes that cross HTTP (`ContainerState`, `ConsoleError`) | schemas for Railway's responses (the adapter passes enum strings through on purpose — `read-container.ts`) |
-| CI | one GitHub Actions workflow: install, `check`, `typecheck`, `test`, `build` | caching Turborepo remotely; matrix |
+| Verification | one local command, `pnpm verify` — the operations gate, the boundary rules, types, tests, build | a CI workflow (removed by the owner: the account's Actions minutes are unavailable, and a permanently red check is worse than none); remote Turborepo caching |
 
 ## Deliberately out of this change
 
