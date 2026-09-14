@@ -47,12 +47,17 @@ Rules:
 
 ## 2. Layers
 
-> **Pending `D-OPS-2`.** The three layers below become three workspace packages —
-> `@repo/railway-client`, `@repo/container-core`, and the route handlers inside
-> `apps/console` — with `ContainerState` moving to `@repo/contracts`. The rules at
-> the end of this section are restated per package in
-> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §6. The
-> diagram is redrawn there once the decision is signed.
+> **Superseded in layout by `D-OPS-2`, ratified 2026-09-14.** The three layers
+> below are now four workspace packages — `@repo/contracts`,
+> `@repo/container-core`, `@repo/railway-client`, `@repo/ui` — plus the route
+> handlers inside `apps/console`, with `ContainerState` living in
+> `@repo/contracts`. The authoritative tree is
+> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1 and the
+> rules at the end of this section are restated per package in its §6. The
+> diagram below is kept as the statement of *what the layers are for*; read the
+> folder names as package names:
+> `railway/` → `@repo/railway-client`, `container/` → `@repo/container-core`,
+> `app/api/` → `apps/console/app/api/`.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -84,11 +89,15 @@ Rules:
                  https://backboard.railway.com/graphql/v2
 ```
 
-Rules the layering enforces (each is a line in `verification.md`):
+Rules the layering enforces (each is a line in `verification.md`; all five in
+their per-package form are in
+[`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §6):
 
-- Nothing outside `railway/` imports a `.graphql` document or mentions the host.
-- Nothing outside `container/actions.ts` calls a mutation.
-- Nothing in the browser bundle mentions the host or the credential.
+- Nothing outside `@repo/railway-client` imports a `.graphql` document or
+  mentions the host.
+- Nothing outside `@repo/container-core`'s `actions.ts` calls a mutation.
+- Nothing in the browser bundle mentions the host or the credential — the
+  browser's only workspace imports are `@repo/contracts` and `@repo/ui`.
 
 ## 3. Credential — `D-API-2`
 
@@ -358,10 +367,13 @@ There is no route to choose a project, environment or service.
 
 ## 10. Stack and runtime — `D-UI-2`
 
-> **Pending `D-OPS-2`.** The layout below is the single-application one that
-> PR #4 merged. The workspace layout that replaces it is
-> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1;
-> the runtime constraints in this section do not change.
+> **Superseded in layout by `D-OPS-2`, ratified 2026-09-14.** The layout below
+> is the single-application one that PR #4 merged, kept here as history. The
+> workspace layout that replaced it is
+> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1; the
+> runtime constraints in this section do not change, and neither does the *no
+> codegen* paragraph — `check-operations.ts` simply moved into
+> `@repo/railway-client`.
 
 Next.js (App Router) + TypeScript, one process, `next start`. In Next.js terms:
 

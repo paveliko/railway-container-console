@@ -36,7 +36,7 @@ already done stays done and is listed as such.
 
 | Parent task | Status on `main` | Now lives in | Blocked on |
 |---|---|---|---|
-| T-2.1 Scaffold | done as a single app (PR #4) — **superseded** | [`../monorepo-workspace/`](../monorepo-workspace/) | `D-OPS-2`, `D-OPS-3`, `Q-UI-5`, `Q-SEC-5` — owner |
+| T-2.1 Scaffold | done as a single app (PR #4) — **superseded**; `D-OPS-2` / `D-OPS-3` ratified 2026-09-14, the move is in flight | [`../monorepo-workspace/`](../monorepo-workspace/) | ~~`D-OPS-2`, `D-OPS-3`~~ signed 2026-09-14; `Q-UI-5`, `Q-SEC-5` still owner-open, defaults applied |
 | T-2.2 Schema gate | done (PR #4) | `monorepo-workspace` T-MW-2.3 (moves it) | — |
 | T-2.3 Account safety | **partly** — the usage limit is still not set | [`../deploy-on-railway/`](../deploy-on-railway/) T-DR-0 | owner |
 | T-3.1 Credential + transport + errors | done, 28 tests (PR #4) | `monorepo-workspace` T-MW-2.3 (moves it) | — |
