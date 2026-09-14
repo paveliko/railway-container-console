@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# No secrets are used anywhere in this workflow, and none are needed: the one
+# task that talks to Railway is `test:live`, which is not run here (design §7,
+# V-MW-19, V-MW-23). The build must succeed with no RAILWAY_* variable set.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        # Version comes from the root package.json "packageManager" field.
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Boundaries, operations gate, types, tests, build
+        run: pnpm turbo run check typecheck test build
+
+      - name: Package boundaries
+        run: node scripts/check-boundaries.mjs
