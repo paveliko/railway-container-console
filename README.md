@@ -29,9 +29,19 @@ Every factual claim in `_research/` is marked `[observed]`, `[inferred]` or
 
 ## Status
 
-Research and specification. **No product code yet** — see
-[`openspec/open-questions.md`](openspec/open-questions.md) for what is still
-unresolved.
+Research and specification. **No product code yet.**
+
+- The Railway API has been probed live, not just read about: subscriptions
+  work over `graphql-transport-ws` (undocumented), CORS is pinned to
+  `railway.com`, and "Not Authorized" is an HTTP 200 —
+  [`openspec/_research/`](openspec/_research/).
+- The minimal product — one screen, one container, up and down — is specified
+  as a change with falsifiable acceptance criteria and an ordered task list —
+  [`openspec/changes/railway-container-control/`](openspec/changes/railway-container-control/).
+- What "spin down" should mean — stop the deployment, remove it, scale to zero
+  or delete the service — is a choice with different consequences and is left
+  to the owner, not made by an agent —
+  [`openspec/open-questions.md`](openspec/open-questions.md) `Q-API-2`.
 
 ---
 
