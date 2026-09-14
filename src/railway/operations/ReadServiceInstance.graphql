@@ -1,0 +1,18 @@
+# The console's whole read side. One request answers "what is the state right
+# now", for the first paint, for every poll, and for every browser.
+query ReadServiceInstance($serviceId: String!, $environmentId: String!) {
+  serviceInstance(serviceId: $serviceId, environmentId: $environmentId) {
+    hasEverDeployed
+    latestDeployment {
+      id
+      status
+      deploymentStopped
+      url
+      canRedeploy
+      instances {
+        id
+        status
+      }
+    }
+  }
+}

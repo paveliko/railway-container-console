@@ -59,16 +59,18 @@ Rules:
 │ app/api/container/*  (route handlers)   maps HTTP ⇄ container/       │
 ├──────────────────────────────────────────────────────────────────────┤
 │ container/                              domain verbs, one state type │
-│   actions.ts   up() · down() · inFlight()                            │
-│   poller.ts    watch() — 30 s idle, 2 s in flight   (D-API-7)        │
+│   actions.ts   up() · down() · inFlight()            [T-4.2, blocked]│
+│   poller.ts    Poller — 30 s idle, 2 s in flight    (D-API-7)        │
 │   state.ts     deriveContainerState(view) → ContainerState  (pure)   │
 ├──────────────────────────────────────────────────────────────────────┤
 │ railway/                            the only module that knows Railway
-│   credential.ts  Credential · headersFor() · fromEnv()               │
-│   transport.ts   execute(doc, vars)            HTTPS POST            │
-│   errors.ts      RailwayError · classify(status, body)               │
-│   operations/    *.graphql, validated against the schema excerpt     │
-│   generated/     types from the excerpt                              │
+│   credential.ts    Credential · headersFor() · fromEnv()             │
+│   transport.ts     execute(doc, vars)          HTTPS POST            │
+│   errors.ts        RailwayError · classify(status, body, headers)    │
+│   readContainer.ts the one read → ContainerView                      │
+│   types.ts         the two status enums, from the excerpt            │
+│   documents.ts     operation strings, checked against operations/    │
+│   operations/      *.graphql, validated against the schema excerpt   │
 └───────────────────────────────┬──────────────────────────────────────┘
                                 │  Project-Access-Token                │
                                 ▼
@@ -122,11 +124,12 @@ type RailwayError =
   | { kind: 'network';        cause: unknown }
   | { kind: 'unknown';        message: string; code?: string; traceId?: string };
 
-function classify(status: number, body: unknown): RailwayError | null;   // null = no error
+function classify(status: number, body: unknown, headers?: Headers): RailwayError | null;
 ```
 
-`classify` reads the body first and the status second, because the observed
-auth failure is `200` + `errors[].message === "Not Authorized"`. The string
+`classify` takes the headers as well as the body, because `Retry-After` lives
+there and nowhere else. It reads the body first and the status second, because
+the observed auth failure is `200` + `errors[].message === "Not Authorized"`. The string
 match is in exactly one place, named, with the research citation next to it —
 so that when `Q-SEC-3` is answered, one line changes.
 
@@ -176,7 +179,7 @@ with a documented reason for not being used, and three questions for Railway
 ```ts
 type ContainerState =
   | { phase: 'down';     reason: 'never-deployed' | 'stopped' | 'removed' }
-  | { phase: 'starting'; deploymentId: string; step?: DeploymentEventStep }
+  | { phase: 'starting'; deploymentId: string; status: DeploymentStatus }
   | { phase: 'up';       deploymentId: string; url?: string; replicas: number }
   | { phase: 'stopping'; deploymentId: string }
   | { phase: 'failed';   deploymentId: string; status: 'FAILED' | 'CRASHED' }
@@ -368,11 +371,20 @@ Two constraints the runtime imposes, recorded so nobody rediscovers them:
   one per process, which is what §5 assumes. Railway runs one container →
   one process → one socket.
 
-Dependencies, deliberately few: `next`, `react`, `graphql` (for document
-parsing and validation against the excerpt), `graphql-ws` (client for the
-subprotocol; Node ≥ 22 has `WebSocket` built in), a codegen dev-dependency,
-`vitest`. No GraphQL client framework — two documents and one subscription do
-not need one, and the layer in §2 is the abstraction.
+Dependencies, deliberately few: `next`, `react`, `graphql` (to parse and
+validate documents against the excerpt), `vitest`, `tsx`. No GraphQL client
+framework — two documents do not need one, and the layer in §2 is the
+abstraction. No `graphql-ws`: `D-API-7` removed the socket.
+
+**No codegen.** The excerpt yields two enums and one object shape; a generator
+for that is more machinery than it saves, so `railway/types.ts` is written by
+hand *from* the excerpt. The part that actually prevents drift is
+`scripts/check-operations.ts`, which runs before every build and validates each
+`operations/*.graphql` against the excerpt — and checks that the inlined copy in
+`documents.ts` still matches the file. Proven in both directions: a bogus field
+fails the build, removing it passes. The excerpt names types it does not define,
+being an editorial selection of a 656-type schema; the checker stubs those as
+scalars rather than editing research evidence to suit a build step.
 
 ## 11. Where it runs — `D-OPS-1`
 

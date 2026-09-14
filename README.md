@@ -4,9 +4,10 @@ A small web console that spins one Railway container up and down through
 Railway's public GraphQL API — built for Railway's take-home for the
 *Senior Full-Stack Engineer - Product* role.
 
-**Status: research and specification are done; no product code yet.**
-What "spin down" should mean is a decision with consequences, and it is left
-to a person, not an agent — see *Next steps*.
+**Status:** research and specification are done, and the client layer is built
+and tested against the live API. The screen and the two mutations are not:
+what "spin down" should mean is a decision with consequences, and it is left to
+a person, not an agent — see *Next steps*.
 
 ---
 
@@ -135,11 +136,16 @@ are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Running it
 
-There is nothing to run yet. When there is: copy `.env.example` to `.env.local`,
-fill in the five `RAILWAY_*` variables (names in
-[`design.md` §3](openspec/changes/railway-container-control/design.md)),
-`npm install`, `npm run dev`. The token never leaves the server and never
-enters this repository.
+```bash
+npm install
+npm test          # 65 tests, no network; the one live test skips without a token
+npm run build     # validates the GraphQL documents against the schema excerpt first
+```
+
+The screen is still a placeholder — it needs the two verbs, which need
+`Q-API-2`. To point the client layer at a real container, copy `.env.example`
+to `.env.local` and fill in the five `RAILWAY_*` variables. The token never
+leaves the server and never enters this repository.
 
 ---
 
