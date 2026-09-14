@@ -6,10 +6,11 @@ is added only when it moves to `archive/`.
 ```
 openspec/changes/<slug>/
 ├── proposal.md       the problem, the approach, what is deliberately out of scope
-├── design.md         decisions taken, each with its rejected alternatives
-└── verification.md   falsifiable acceptance criteria, one per line
+├── design.md         architecture, scenarios, states; decisions with their rejected alternatives
+├── verification.md   falsifiable acceptance criteria, one per line
+└── tasks.md          ordered, checkable tasks — result, dependencies, acceptance, how verified
 ```
 
-Nothing here yet. The open questions in
-[`../open-questions.md`](../open-questions.md) are resolved first, because
-`Q-API-1` and `Q-API-2` decide what the change is actually proposing.
+| Change | Status | What it proposes |
+|---|---|---|
+| [`railway-container-control/`](railway-container-control/) | proposed | The minimal product: one screen that spins one configured container up and down, the server-side layer that talks to Railway, deployment of the console on Railway, and the demo. Everything except the bodies of the two mutations, which wait on the owner's answer to `Q-API-2`. |

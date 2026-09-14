@@ -1,0 +1,330 @@
+# Railway public GraphQL API — excerpt of the live schema
+# Obtained 2026-09-14 by introspecting https://backboard.railway.com/graphql/v2
+# with an account token (not in this repository). Full schema: 656 types,
+# Query 163 fields, Mutation 255 fields, Subscription 13 fields.
+# Only the parts the console reads or calls are reproduced here; the
+# selection is the editorial act, the text is verbatim.
+
+type Query {
+  """Find a single deployment"""
+  deployment(id: String!): Deployment!
+  """Get all deployments"""
+  deployments(after: String, before: String, first: Int, input: DeploymentListInput!, last: Int): QueryDeploymentsConnection!
+  """Find a single environment"""
+  environment(id: String!, projectId: String): Environment!
+  """Gets the authenticated user."""
+  me: User!
+  """Get a project by ID"""
+  project(id: String!): Project!
+  """Get a single project token by the value in the header"""
+  projectToken: ProjectToken!
+  """List available regions"""
+  regions(projectId: String): [Region!]!
+  """Get a service by ID"""
+  service(id: String!): Service!
+  """Get a service instance belonging to a service and environment"""
+  serviceInstance(environmentId: String!, serviceId: String!): ServiceInstance!
+}
+
+type Mutation {
+  """Cancels a deployment."""
+  deploymentCancel(id: String!): Boolean!
+  """Redeploys a deployment."""
+  deploymentRedeploy(id: String!, usePreviousImageTag: Boolean): Deployment!
+  """Removes a deployment."""
+  deploymentRemove(id: String!): Boolean!
+  """Restarts a deployment."""
+  deploymentRestart(id: String!): Boolean!
+  """Stops a deployment."""
+  deploymentStop(id: String!): Boolean!
+  """Deploys all connected triggers for an environment."""
+  environmentTriggersDeploy(input: EnvironmentTriggersDeployInput!): Boolean!
+  """Creates a new service."""
+  serviceCreate(input: ServiceCreateInput!): Service!
+  """Deletes a service."""
+  serviceDelete(environmentId: String, id: String!): Boolean!
+  """Deploy a service instance"""
+  serviceInstanceDeploy(commitSha: String, environmentId: String!, latestCommit: Boolean, serviceId: String!): Boolean!
+  """Deploy a service instance. Returns a deployment ID"""
+  serviceInstanceDeployV2(commitSha: String, environmentId: String!, serviceId: String!): String!
+  """Redeploy a service instance"""
+  serviceInstanceRedeploy(environmentId: String!, serviceId: String!): Boolean!
+  """Update a service instance"""
+  serviceInstanceUpdate(environmentId: String, input: ServiceInstanceUpdateInput!, serviceId: String!): Boolean!
+}
+
+type Subscription {
+  """Stream logs for a build"""
+  buildLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+  """Subscribe to updates for a specific deployment"""
+  deployment(id: String!): Deployment!
+  """Subscribe to deployment events for a specific deployment"""
+  deploymentEvents(id: String!): DeploymentEvent!
+  """Stream logs for a deployment"""
+  deploymentLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+}
+
+type Project {
+  createdAt: DateTime!
+  deletedAt: DateTime
+  environments(after: String, before: String, first: Int, isEphemeral: Boolean, last: Int, sort: SortOrder): ProjectEnvironmentsConnection!
+  id: ID!
+  isPublic: Boolean!
+  name: String!
+  services(after: String, before: String, first: Int, last: Int): ProjectServicesConnection!
+  workspaceId: String
+}
+
+type Environment {
+  deployments(after: String, before: String, first: Int, last: Int): EnvironmentDeploymentsConnection!
+  id: ID!
+  isEphemeral: Boolean!
+  name: String!
+  projectId: String!
+  serviceInstances(after: String, before: String, first: Int, last: Int): EnvironmentServiceInstancesConnection!
+}
+
+type Service {
+  createdAt: DateTime!
+  deletedAt: DateTime
+  deployments(after: String, before: String, first: Int, last: Int): ServiceDeploymentsConnection! @deprecated(reason: "Use environment.deployments for properly scoped access control")
+  icon: String
+  id: ID!
+  name: String!
+  projectId: String!
+  serviceInstances(after: String, before: String, first: Int, last: Int): ServiceServiceInstancesConnection! @deprecated(reason: "Use environment.serviceInstances for properly scoped access control")
+}
+
+type ServiceInstance {
+  """All currently active (deployed and running) deployments for this service instance"""
+  activeDeployments: [Deployment!]!
+  buildCommand: String
+  builder: Builder!
+  createdAt: DateTime!
+  cronSchedule: String
+  deletedAt: DateTime
+  dockerfilePath: String
+  domains: AllDomains!
+  drainingSeconds: Int
+  edgeConfig: EdgeConfig
+  environmentId: String!
+  """Whether any deployment was ever created for this service instance, including deployments that have since been removed. Distinguishes a service that was torn down (all deployments removed) from one that has never deployed — latestDeployment and activeDeployments are null/empty for both."""
+  hasEverDeployed: Boolean!
+  healthcheckPath: String
+  healthcheckTimeout: Int
+  id: ID!
+  ipv6EgressEnabled: Boolean
+  isUpdatable: Boolean!
+  """The most recent deployment for this service instance"""
+  latestDeployment: Deployment
+  nextCronRunAt: DateTime
+  nixpacksPlan: JSON
+  numReplicas: Int
+  overlapSeconds: Int
+  preDeployCommand: JSON
+  preDeployTimeoutSeconds: Int
+  railpackInfo: RailpackInfo
+  railwayConfigFile: String
+  region: String
+  """Config read from the repo's config file, taken from the most recent deployment that actually read it. Null when no deployment has resolved a config file yet. An empty `fileManifest` is a real answer and means the repo has no config file — do not read this off the latest deployment instead, since a deployment whose snapshot never completed carries no file config at all and is not the same as a repo without one."""
+  resolvedFileConfig: ResolvedFileConfig
+  restartPolicyMaxRetries: Int!
+  restartPolicyType: RestartPolicyType!
+  rootDirectory: String
+  service: Service!
+  serviceId: String!
+  serviceName: String!
+  sleepApplication: Boolean
+  source: ServiceSource
+  startCommand: String
+  updatedAt: DateTime!
+  upstreamUrl: String
+  watchPatterns: [String!]!
+}
+
+type Deployment {
+  canRedeploy: Boolean!
+  canRollback: Boolean!
+  createdAt: DateTime!
+  creator: DeploymentCreator
+  """Check if a deployment's instances have all stopped"""
+  deploymentStopped: Boolean!
+  diagnosis: DeploymentDiagnosis
+  environment: Environment!
+  environmentId: String!
+  id: ID!
+  instances: [DeploymentDeploymentInstance!]!
+  meta: DeploymentMeta
+  projectId: String!
+  service: Service!
+  serviceId: String
+  snapshotId: String
+  sockets: [DeploymentSocket!]!
+  staticUrl: String
+  status: DeploymentStatus!
+  statusUpdatedAt: DateTime
+  suggestAddServiceDomain: Boolean!
+  updatedAt: DateTime!
+  url: String
+}
+
+type DeploymentDeploymentInstance {
+  id: String!
+  status: DeploymentInstanceStatus!
+}
+
+enum DeploymentStatus {
+  BUILDING
+  CRASHED
+  DEPLOYING
+  FAILED
+  INITIALIZING
+  NEEDS_APPROVAL
+  QUEUED
+  REMOVED
+  REMOVING
+  SKIPPED
+  SLEEPING
+  SUCCESS
+  WAITING
+}
+
+enum DeploymentInstanceStatus {
+  CRASHED
+  CREATED
+  EXITED
+  INITIALIZING
+  REMOVED
+  REMOVING
+  RESTARTING
+  RUNNING
+  SKIPPED
+  STOPPED
+}
+
+type DeploymentEvent {
+  completedAt: DateTime
+  createdAt: DateTime!
+  id: ID!
+  payload: DeploymentEventPayload
+  step: DeploymentEventStep!
+}
+
+enum DeploymentEventStep {
+  BUILD_IMAGE
+  CONFIGURE_NETWORK
+  CREATE_CONTAINER
+  DRAIN_INSTANCES
+  HEALTHCHECK
+  MIGRATE_VOLUMES
+  PRE_DEPLOY_COMMAND
+  PUBLISH_IMAGE
+  SNAPSHOT_CODE
+  WAIT_FOR_DEPENDENCIES
+}
+
+"""The result of a logs query."""
+type Log {
+  """The attributes that were parsed from a structured log"""
+  attributes: [LogAttribute!]!
+  """The contents of the log message"""
+  message: String!
+  """The severity of the log message (eg. err)"""
+  severity: String
+  """The tags that were associated with the log"""
+  tags: LogTags
+  """The timestamp of the log message in format RFC3339 (nano)"""
+  timestamp: String!
+}
+
+input ServiceCreateInput {
+  branch: String
+  """Environment ID. If the specified environment is a fork, the service will only be created in it. Otherwise it will created in all environments that are not forks of other environments"""
+  environmentId: String
+  icon: String
+  name: String
+  projectId: String!
+  registryCredentials: RegistryCredentialsInput
+  source: ServiceSourceInput
+  """Template ID. Required when templateServiceId is provided."""
+  templateId: String
+  """Template service ID within the template's serializedConfig. Required when templateId is provided."""
+  templateServiceId: String
+  variables: EnvironmentVariables
+}
+
+input ServiceSourceInput {
+  image: String
+  repo: String
+}
+
+input ServiceInstanceUpdateInput {
+  buildCommand: String
+  builder: Builder
+  cronSchedule: String
+  dockerfilePath: String
+  drainingSeconds: Int
+  healthcheckPath: String
+  healthcheckTimeout: Int
+  ipv6EgressEnabled: Boolean
+  multiRegionConfig: JSON
+  nixpacksPlan: JSON
+  numReplicas: Int
+  overlapSeconds: Int
+  preDeployCommand: [String!]
+  preDeployTimeoutSeconds: Int
+  railwayConfigFile: String
+  region: String
+  registryCredentials: RegistryCredentialsInput
+  restartPolicyMaxRetries: Int
+  restartPolicyType: RestartPolicyType
+  rootDirectory: String
+  sleepApplication: Boolean
+  source: ServiceSourceInput
+  startCommand: String
+  watchPatterns: [String!]
+}
+
+input DeploymentListInput {
+  environmentId: String
+  includeDeleted: Boolean
+  projectId: String
+  serviceId: String
+  status: DeploymentStatusInput
+}
+
+input DeploymentStatusInput {
+  in: [DeploymentStatus!]
+  notIn: [DeploymentStatus!]
+}
+
+input EnvironmentTriggersDeployInput {
+  environmentId: String!
+  projectId: String!
+  serviceId: String!
+}
+
+enum RestartPolicyType {
+  ALWAYS
+  NEVER
+  ON_FAILURE
+}
+
+enum Builder {
+  HEROKU
+  NIXPACKS
+  PAKETO
+  RAILPACK
+}
+
+type ProjectToken {
+  createdAt: DateTime!
+  displayToken: String!
+  environment: Environment!
+  environmentId: String!
+  id: ID!
+  name: String!
+  project: Project!
+  projectId: String!
+}
+
