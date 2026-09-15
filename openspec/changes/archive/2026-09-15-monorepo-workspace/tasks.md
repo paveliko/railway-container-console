@@ -31,7 +31,7 @@ whom is stated.
 ## T-MW-4 · Paperwork
 
 - [x] **T-MW-4.1 Amend the parent and the siblings.** Result: parent `design.md` §2 and §10 and `verification.md` V-40 / V-41 per design §8; parent `tasks.md` T-2.1 marked superseded by this change; `console-screen` reconciled with `@repo/ui` existing; `changes/README.md` updated; root `README.md` "How the repository is organised" and "Running it" updated to `pnpm`. Depends on: T-MW-3.3. Acceptance: no reference to `src/railway/` or `src/container/` at the root remains in the parent's design except in the history note; no document still says there is no `ui` package. Verified by: grep.
-- [ ] **T-MW-4.2 Archive.** Result: this folder moved to `openspec/changes/archive/<date>-monorepo-workspace/`. Depends on: T-MW-4.1. *Owner decides when; the change is only archived once the PR is merged.*
+- [x] **T-MW-4.2 Archive.** Result: this folder moved to `openspec/changes/archive/2026-09-15-monorepo-workspace/`. Depends on: T-MW-4.1. Done 2026-09-15: the PR is merged and the owner asked for it. The move waited on `spec-validation` `T-SV-12`, which closed `Q-OPS-6` — until then `check-specs.mjs` would have reported `archive/` as a change missing all four of its files.
 
 ## Done
 
@@ -39,5 +39,7 @@ T-MW-1 … T-MW-4.1 landed on `codex/monorepo-workspace`. Nothing in the change
 touched Railway: the only network call it contains is the live test, which is
 not in `test`, not in CI, and skips without credentials.
 
-T-MW-4.2 (archive) waits on the PR being merged, and T-MW-0.2 waits on the
-owner.
+T-MW-4.2 (archive) waited on the PR being merged; it was merged, and this
+folder was archived 2026-09-15. T-MW-0.2 still waits on the owner — archiving
+the change does not close a row that was always the owner's, and leaving it
+open here is the point of `R-TRACE` still running inside `archive/`.

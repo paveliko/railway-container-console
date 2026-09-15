@@ -120,7 +120,8 @@ Ordered. Nothing below the line starts before the line is crossed.
       and `D-OPS-3` (packages consumed from source, no `dist/`, a `typecheck`
       per package) are `ratified`, each with an owner's amendment recorded in
       place. Implemented in
-      [`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/).
+      [`openspec/changes/archive/2026-09-15-monorepo-workspace/`](openspec/changes/archive/2026-09-15-monorepo-workspace/),
+      and archived there on 2026-09-15.
 - [ ] **Answer `Q-UI-5` and `Q-SEC-5`** — where the two Railway status enums
       live, and who reads the environment. Both were left open at ratification;
       the code applies each question's registered default and marks it at the
@@ -148,8 +149,8 @@ what the customers page actually says. Update the `[to-verify]` marks.
 - [ ] **Read the usage page** a day later and close `Q-OPS-2` — is a stopped
       deployment billed? (T-3.5)
 - [x] ~~**Then build**~~ — the order held, and everything but the last step has
-      landed: [`monorepo-workspace`](openspec/changes/monorepo-workspace/) →
-      [`container-verbs`](openspec/changes/container-verbs/) →
+      landed: [`monorepo-workspace`](openspec/changes/archive/2026-09-15-monorepo-workspace/) →
+      [`container-verbs`](openspec/changes/archive/2026-09-15-container-verbs/) →
       [`console-server`](openspec/changes/console-server/) →
       [`console-screen`](openspec/changes/console-screen/) →
       [`deploy-on-railway`](openspec/changes/deploy-on-railway/) → README and
@@ -210,8 +211,9 @@ openspec/
 ├── _research/         source material — every claim marked [observed] / [inferred] / [to-verify]
 ├── changes/
 │   ├── railway-container-control/   the parent: proposal, design, 60 criteria (V-N), tasks as an index
-│   ├── monorepo-workspace/          the workspace above — signed, implemented
-│   ├── container-verbs/             up() / down() — built; Q-API-2 closed
+│   ├── archive/                     changes whose work is finished; the folder gains its date here
+│   │   ├── 2026-09-15-monorepo-workspace/   the workspace above — signed, implemented
+│   │   └── 2026-09-15-container-verbs/      up() / down() — built; Q-API-2 closed
 │   ├── console-server/              runtime, four routes, SSE, fake Railway — built
 │   ├── console-screen/              the one screen — built
 │   ├── design-system/               DESIGN.md as the single source for every token

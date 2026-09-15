@@ -2,9 +2,9 @@
 
 **Status:** in implementation — `D-OPS-2` and `D-OPS-3` were **ratified by the
 owner on 2026-09-14**, both with amendments recorded in
-[`../../decisions.md`](../../decisions.md) · **Capabilities:** `OPS` (shape of
+[`../../../decisions.md`](../../../decisions.md) · **Capabilities:** `OPS` (shape of
 the build), touches `API` and `UI` only by moving files · **Parent change:**
-[`../railway-container-control/`](../railway-container-control/) — this change
+[`../../railway-container-control/`](../../railway-container-control/) — this change
 replaces its T-2.1 and re-homes T-2.2, T-3.1 … T-3.3 and T-4.1, all of which
 are already done as a single application.
 **Still open, and carried, not smoothed over:** `Q-UI-5` and `Q-SEC-5`. Both
@@ -17,7 +17,7 @@ shows, so that reversing either is a local edit and not a redesign. See
 
 The parent change draws three layers — `railway/`, `container/`, the route
 handlers — and states three rules about what may import what
-([design §2](../railway-container-control/design.md)). Today those rules are
+([design §2](../../railway-container-control/design.md)). Today those rules are
 enforced by prose and by two grep checks (`V-40`, `V-41`). The module system
 does not know them, and the code that was merged in PR #4 shows the
 consequence:
@@ -107,10 +107,10 @@ build step, not the type check.
 
 | Left out | Why |
 |---|---|
-| The two verbs `up()` / `down()` | `Q-API-2`, owner — [`../container-verbs/`](../container-verbs/) |
-| The runtime singleton, the four routes, SSE | [`../console-server/`](../console-server/) |
-| The screen, and the container-control components | [`../console-screen/`](../console-screen/) — this change ships `@repo/ui` with its primitives and no feature components |
-| Deploying the workspace on Railway | [`../deploy-on-railway/`](../deploy-on-railway/); the one open question it raises is registered as `Q-OPS-3` |
+| The two verbs `up()` / `down()` | `Q-API-2`, owner — [`../2026-09-15-container-verbs/`](../2026-09-15-container-verbs/) |
+| The runtime singleton, the four routes, SSE | [`../../console-server/`](../../console-server/) |
+| The screen, and the container-control components | [`../../console-screen/`](../../console-screen/) — this change ships `@repo/ui` with its primitives and no feature components |
+| Deploying the workspace on Railway | [`../../deploy-on-railway/`](../../deploy-on-railway/); the one open question it raises is registered as `Q-OPS-3` |
 | A linter | there is none today; `eslint-config` is set aside in `D-OPS-2`, not refused |
 
 ## What "done" means
@@ -124,7 +124,7 @@ packages instead of folders.
 ## What is still open
 
 Neither question below was answered in the ratification message. Each has a
-**registered default** in [`../../open-questions.md`](../../open-questions.md);
+**registered default** in [`../../../open-questions.md`](../../../open-questions.md);
 the implementation applies that default, marks it at the point of use, and
 changes nothing about the observable behaviour of the code that moves.
 

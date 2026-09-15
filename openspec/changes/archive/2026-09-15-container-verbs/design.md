@@ -1,7 +1,7 @@
 # Design: `container-verbs`
 
 Everything about *which* verbs is in the parent's
-[design §7](../railway-container-control/design.md) and `D-API-5`. This
+[design §7](../../railway-container-control/design.md) and `D-API-5`. This
 document only fixes where the pieces live in the workspace.
 
 **Amended by `vite-console`, recorded 2026-09-15.** §1 and §2 below describe a
