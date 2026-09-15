@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env.local src/server/main.ts --dev",
-    "build": "vite build",
+    "build": "vite build && node ../../scripts/check-bundle.mjs",
     "start": "tsx src/server/main.ts",
     "typecheck": "tsc -p tsconfig.client.json && tsc -p tsconfig.server.json",
     "test": "vitest run"

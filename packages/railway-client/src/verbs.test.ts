@@ -29,6 +29,15 @@ const RUNNING = view({
   instances: [{ id: 'i', status: 'RUNNING' }],
 });
 const NEVER = view(null, false);
+/**
+ * A deployment Railway has removed. It still has an id, which is exactly why
+ * the branch cannot key on "is there a deployment" — the id is there to restart
+ * and restarting it is the one thing that will not work.
+ */
+const REMOVED = view({
+  id: 'dep-1', status: 'REMOVED', deploymentStopped: true, url: null, canRedeploy: true,
+  instances: [],
+});
 
 /** Records the operation name of every request, and answers each in turn. */
 function transcript(readData: ReadServiceInstanceData, mutationData: unknown) {
@@ -68,6 +77,18 @@ describe('startContainer — D-API-5, V-CV-1, V-CV-2', () => {
     await startContainer(credential, target, { fetchImpl });
 
     expect(calls[1]).toBe('DeployServiceInstance');
+  });
+
+  it('deploys a removed deployment rather than restarting it — V-CV-3', async () => {
+    const { calls, fetchImpl } = transcript(REMOVED, { serviceInstanceDeployV2: 'dep-new' });
+    const result = await startContainer(credential, target, { fetchImpl });
+
+    // `down` alone is not specific enough to decide: `REMOVED` derives to
+    // `down/removed`, and only `down/stopped` can be revived. A restart here
+    // would be a mutation against a deployment that no longer exists.
+    expect(calls).toEqual(['ReadServiceInstance', 'DeployServiceInstance']);
+    expect(calls).not.toContain('RestartDeployment');
+    expect(result).toEqual({ deploymentId: 'dep-new' });
   });
 
   it('issues its mutation exactly once — V-12', async () => {

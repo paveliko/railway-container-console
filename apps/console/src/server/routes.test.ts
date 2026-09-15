@@ -11,12 +11,15 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { consoleErrorSchema } from '@repo/contracts';
 import { Poller } from '@repo/container-core';
 import { createRailwayProvider } from '@repo/railway-client';
 
 import { handle, isApiRequest } from './routes';
 import { setRuntime, type Runtime } from './runtime';
-import { fakeRailway, RUNNING, STOPPED, type Failure, type Frame } from '../../test/fake-railway';
+import {
+  fakeRailway, RUNNING, STARTING, STOPPED, type Failure, type Frame,
+} from '../../test/fake-railway';
 
 const credential = { kind: 'project', token: 'tok' } as const;
 const target = { projectId: 'p', environmentId: 'e', serviceId: 's' };
@@ -34,18 +37,13 @@ interface Harness {
 }
 
 function start(options: Harness = {}): void {
-  let frame = options.frame ?? STOPPED;
-  let failure: Failure | null = options.failWith ?? null;
-
+  // `setFrame` and `setFailure` come from the fake itself, so a test that
+  // changes either mid-flight is typed rather than cast into place.
   railway = fakeRailway({
-    frame: () => frame,
-    failMutationsWith: () => failure,
+    frame: () => options.frame ?? STOPPED,
+    failMutationsWith: () => options.failWith ?? null,
     mutationDelayMs: () => options.delayMs ?? 0,
   });
-  (railway as unknown as { setFrame: (f: Frame) => void }).setFrame = (f) => { frame = f; };
-  (railway as unknown as { setFailure: (f: Failure | null) => void }).setFailure = (f) => {
-    failure = f;
-  };
 
   const provider = createRailwayProvider(credential, target, railway.fetchImpl);
   const poller = new Poller({ provider, onReadError: () => {} });
@@ -196,6 +194,87 @@ describe('the error contract — Q-UI-7', () => {
   });
 });
 
+describe('the phase sequence — V-CS-5', () => {
+  /** `down` carries a reason, and the reason is half of what the card says. */
+  const name = (state: { phase: string; reason?: string }) =>
+    state.phase === 'down' ? `down/${state.reason}` : state.phase;
+
+  it('start → starting → up → stop → down, exactly as the experiment recorded', async () => {
+    start({ frame: STOPPED });
+
+    const phases: string[] = [];
+    runtime.poller.subscribe((state) => phases.push(name(state)));
+
+    // The poller emits only on real change and its loop is never started here,
+    // so the frames advance by hand and the recording is the transition list
+    // rather than a sample of a timer.
+
+    // 1. What the experiment left behind: SUCCESS / stopped=true / [EXITED].
+    const before = await fetch(`${origin}/api/container/state`);
+    expect(await before.json()).toEqual({ phase: 'down', reason: 'stopped' });
+
+    // 2. Start. A stopped deployment is revived, keeping its id.
+    const started = await post('/api/container/up');
+    expect(started.status).toBe(202);
+    expect(await started.json()).toEqual({ deploymentId: 'dep-1' });
+    expect(railway.countOf('RestartDeployment')).toBe(1);
+
+    // 3. A second press while the first is still in flight — V-17, V-18.
+    const second = await post('/api/container/up');
+    expect(second.status).toBe(409);
+    expect(await second.json()).toEqual({ error: 'transition-in-flight' });
+    expect(railway.countOf('RestartDeployment')).toBe(1);
+
+    // 4. The instance appears, then runs.
+    railway.setFrame(STARTING);
+    await runtime.poller.pollOnce();
+    railway.setFrame(RUNNING);
+    await runtime.poller.pollOnce();
+
+    // The container arrived where the press was aimed, so the press is over —
+    // and only now is the guard free.
+    expect(runtime.poller.operation()).toMatchObject({
+      transition: 'up', target: 'dep-1', status: 'succeeded',
+    });
+    expect(runtime.poller.busy()).toBe(false);
+
+    // 5. Stop.
+    const stopping = await post('/api/container/down');
+    expect(stopping.status).toBe(202);
+    expect(railway.countOf('StopDeployment')).toBe(1);
+
+    railway.setFrame(STOPPED);
+    await runtime.poller.pollOnce();
+
+    // 6. And the route agrees with the stream.
+    const after = await fetch(`${origin}/api/container/state`);
+    expect(await after.json()).toEqual({ phase: 'down', reason: 'stopped' });
+
+    expect(phases).toEqual(['down/stopped', 'starting', 'up', 'down/stopped']);
+  });
+});
+
+describe('a failed press does not disturb the state — V-CS-6', () => {
+  it('GET /state afterwards still serves the last known one', async () => {
+    start({ frame: RUNNING });
+
+    const first = await fetch(`${origin}/api/container/state`);
+    const known = await first.json();
+    expect(known).toMatchObject({ phase: 'up', deploymentId: 'dep-1' });
+
+    railway.setFailure('not-authorized');
+    const refused = await post('/api/container/down');
+    expect(refused.status).toBe(502);
+
+    // Railway refusing a mutation is not a claim about the container. The last
+    // thing actually observed stands, and it is served without a fresh read.
+    const readsBefore = railway.countOf('ReadServiceInstance');
+    const after = await fetch(`${origin}/api/container/state`);
+    expect(await after.json()).toEqual(known);
+    expect(railway.countOf('ReadServiceInstance')).toBe(readsBefore);
+  });
+});
+
 describe('the passphrase gate — V-20, V-CS-7', () => {
   it('leaves everything open when no passphrase is configured', async () => {
     start({ frame: RUNNING });
@@ -218,6 +297,11 @@ describe('the passphrase gate — V-20, V-CS-7', () => {
 
     const wrong = await post('/api/session', { passphrase: 'guess' });
     expect(wrong.status).toBe(401);
+    // This route writes its refusal directly rather than raising, so it is the
+    // one error body that does not pass through `toConsoleError`. It still has
+    // to parse — `V-CS-8` is about every body the routes produce, not every
+    // body that function produces.
+    expect(consoleErrorSchema.parse(await wrong.json())).toEqual({ error: 'unauthorized' });
 
     const right = await post('/api/session', { passphrase: 'open sesame' });
     expect(right.status).toBe(204);

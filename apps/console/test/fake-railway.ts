@@ -31,6 +31,22 @@ export const STOPPED: Frame = {
   },
 };
 
+/**
+ * Mid-flight, between the restart and the container being up.
+ *
+ * `status` is still `SUCCESS` — a restart never rebuilds, so it never passes
+ * through `BUILDING` — and what says the container is coming is the instance
+ * reading `CREATED`. That is row 11 of `deriveContainerState`, and it is the
+ * only reason a `starting` frame exists at all on the restart path.
+ */
+export const STARTING: Frame = {
+  hasEverDeployed: true,
+  latestDeployment: {
+    id: 'dep-1', status: 'SUCCESS', deploymentStopped: false, url: null,
+    instances: [{ id: 'i-1', status: 'CREATED' }],
+  },
+};
+
 export const RUNNING: Frame = {
   hasEverDeployed: true,
   latestDeployment: {
@@ -68,6 +84,7 @@ function body(data: unknown, status = 200, headers: Record<string, string> = {})
 export function fakeRailway(options: FakeOptions = {}) {
   const calls: string[] = [];
   let frame = options.frame ?? (() => STOPPED);
+  let failure = options.failMutationsWith ?? (() => null);
 
   const fetchImpl = async (_url: unknown, init?: RequestInit): Promise<Response> => {
     const request = JSON.parse(String(init?.body)) as { query: string };
@@ -94,7 +111,7 @@ export function fakeRailway(options: FakeOptions = {}) {
     const delay = options.mutationDelayMs?.() ?? 0;
     if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
 
-    switch (options.failMutationsWith?.() ?? null) {
+    switch (failure()) {
       case 'not-authorized':
         return body({ errors: [{ message: 'Not Authorized', traceId: 'trace-abc' }] });
       case 'rate-limited':
@@ -122,7 +139,11 @@ export function fakeRailway(options: FakeOptions = {}) {
   return {
     fetchImpl: fetchImpl as unknown as typeof fetch,
     calls,
+    /** Both setters exist so a test can change its mind mid-flight, which is
+     *  what a transition is: the frame that answers the next read is not the
+     *  one that answered the last. */
     setFrame: (next: Frame) => { frame = () => next; },
+    setFailure: (next: Failure | null) => { failure = () => next; },
     countOf: (name: string) => calls.filter((c) => c === name).length,
   };
 }

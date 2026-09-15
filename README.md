@@ -186,6 +186,7 @@ packages/
 └── ui/                @repo/ui              Button · Badge · Card · Spinner — react and nothing else
 scripts/
 ├── check-boundaries.mjs   the eight rules pnpm and the exports maps cannot see
+├── check-bundle.mjs       the built assets, for Railway's host and a build-time token
 ├── check-design.mjs       every contrast ratio in DESIGN.md, recomputed from the hex
 ├── check-designmd.mjs     DESIGN.md against the published @google/design.md format
 ├── check-specs.mjs        the openspec/ corpus: identifiers, references, traceability
@@ -239,10 +240,12 @@ pnpm verify       # everything below, in dependency order — run this before pu
 
 There is no CI workflow; `pnpm verify` is the gate, and it is hermetic — no
 secret, no network, no Railway — so it gives the same answer on any clean
-clone. Four of its checks prove themselves: `check-design.mjs` and
+clone. Several of its checks prove themselves: `check-design.mjs` and
 `check-specs.mjs` each run a suite of fixtures whose red *and* green paths are
 committed, `check-styles.mjs` proves its probe by removing `@source` and
-rebuilding, and every rule in `check-specs.mjs` has a logged break-and-revert.
+rebuilding, `check-bundle.mjs` was proved by importing the Railway client into a
+client component and watching the build fail, and every rule in
+`check-specs.mjs` has a logged break-and-revert.
 A check whose failure path is untested is not a guarantee. Its parts, when you
 want one on its own:
 
@@ -250,8 +253,10 @@ want one on its own:
 pnpm check        # the operations gate, the boundary rules, the two design
                   # checks, and the specification corpus
 pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
-pnpm test         # 164 tests across the four packages and the app
-pnpm build        # runs the operations gate first, then vite build
+pnpm test         # 193 tests across the four packages and the app
+pnpm build        # runs the operations gate first, then vite build, then
+                  # greps everything emitted for Railway's host and for a
+                  # build-time token — V-15, and a leak fails the build
 pnpm dev          # one process at apps/console — Vite in middleware mode,
                   # packages picked up from source through tsx
 ```
