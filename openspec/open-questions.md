@@ -183,6 +183,34 @@ reports it as an unknown directory rather than guessing. Designing the semantics
 before there is one archived change to look at would be speculation dressed as a
 rule.
 
+→ **Closed 2026-09-15**, by implementing the semantics rather than by a
+decision — there was no argument to have, only a set of answers that follow from
+what the rules already mean. What changed is the *"implemented for now:
+nothing"* above: there are now two archived changes to look at, so the condition
+this question deferred on is gone. `changes/spec-validation/design.md` §8 states
+it in full; the four questions this row asked are answered:
+
+- *Does an archived change still have to satisfy `R-TRACE`?* **Yes.** The rule
+  proves somebody signed up to meet the criterion, and archiving is the claim
+  that they did — so the trace is the evidence for the archival, and exempting
+  it removes the check at the one moment it is worth running.
+- *Do its identifiers stay in the resolvable set?* **Yes, unchanged** — they
+  were never conditional on where the file sat, which is why `R-REF` needed no
+  edit at all.
+- *Is it exempt from `R-STRUCT`?* **Only `archive/` itself is.** It is a
+  container: no four files, no index row. An entry inside it is a change and
+  keeps both the four files and the `<YYYY-MM-DD>-<slug>` name; what it loses is
+  the index row, because the index lists what is live.
+- *Does the date prefix change the child-code legend?* **No.** The legend is
+  keyed on the bare slug. Making that clause mean something is what turned the
+  legend from a set of known codes into a binding `code → change`, which now
+  also catches a criterion defined outside the change its code names.
+
+Registered as `V-SV-18` and `V-SV-19`, closed by `T-SV-12`, with five fixtures
+and a logged break-and-revert. The two changes that prompted it —
+`monorepo-workspace` (`T-MW-4.2`) and `container-verbs` (`T-CV-4`) — were
+archived in the same PR, after the checker could see them.
+
 ### `Q-OPS-7` — may the corpus gate stop being hermetic?
 
 *medium · **owner** · open, implemented with the hermetic default*

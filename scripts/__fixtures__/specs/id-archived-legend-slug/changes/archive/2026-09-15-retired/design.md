@@ -1,0 +1,3 @@
+# Design: `retired`
+
+A fixture.
