@@ -129,12 +129,12 @@ Each names the criterion it implements, so a failure points at a line in
 
 | Rule | Severity | Criterion | What it checks |
 |---|---|---|---|
-| `R-STRUCT` | error | `V-SV-5` | Four files per change directory — extra files are fine; the index in `../README.md` lists exactly the directories present; every `D-`/`Q-` row sits in a table contiguous with its header |
-| `R-ID` | error | `V-SV-6` | `Q-` and `D-` dense from 1 and unique per capability; at most one canonical definition and one index entry per `V-`/`T-`; plain `V-<n>` defined only by the parent change; capabilities and child codes from their declared vocabularies |
-| `R-REF` | error | `V-SV-7` | Every reference resolves; every delegation cell resolves |
-| `R-TRACE` | error | `V-SV-8` | Every criterion reaches a task |
+| `R-STRUCT` | error | `V-SV-5`, `V-SV-18` | Four files per change directory, archived ones included — extra files are fine; the index in `../README.md` lists exactly the **live** directories; an entry under `archive/` is named `<YYYY-MM-DD>-<slug>`; every `D-`/`Q-` row sits in a table contiguous with its header |
+| `R-ID` | error | `V-SV-6`, `V-SV-18` | `Q-` and `D-` dense from 1 and unique per capability; at most one canonical definition and one index entry per `V-`/`T-`; plain `V-<n>` defined only by the parent change; capabilities from their declared vocabulary, and a child code from the legend's binding to that change's **bare** slug |
+| `R-REF` | error | `V-SV-7`, `V-SV-19` | Every reference resolves, including into an archived change; every delegation cell resolves |
+| `R-TRACE` | error | `V-SV-8`, `V-SV-19` | Every criterion reaches a task, inside `archive/` as well as outside |
 | `R-LINK` | error | `V-SV-9` | Every relative link resolves to a file or directory |
-| `R-VOCAB` | error | `V-SV-10` | Checkbox, criterion kind, decision status keyword, `**Amended by**` target |
+| `R-VOCAB` | error | `V-SV-10`, `V-SV-18` | Checkbox, criterion kind, decision status keyword, `**Amended by**` target — live or archived |
 | `W-CLAIM` | warning | `V-SV-11` | Research paragraphs that open a claim without a marker |
 | `W-CRED` | warning | `V-SV-12` | Known credential slots carry a placeholder |
 | `W-FILE` | warning | `V-SV-13` | A `D-`/`Q-` row sits under the heading naming its own capability |
@@ -287,5 +287,89 @@ rather than letting the number stand as an argument.
 - **Markdown anchors.** The corpus has zero relative anchor links, so the check
   would be untested by construction. `R-LINK` resolves files and directories
   only, and says so.
-- **Archived changes.** `changes/archive/` does not exist. If it appears, the
-  checker reports it as unknown rather than guessing at semantics. `Q-OPS-6`.
+
+**Amended 2026-09-15.** This section carried a ninth bullet, *"Archived changes.
+`changes/archive/` does not exist. If it appears, the checker reports it as
+unknown rather than guessing at semantics. `Q-OPS-6`."* It was true when it was
+written and it stopped being true the moment there was an archived change to
+look at. The semantics are now implemented and the bullet has moved to §8; what
+it used to say is kept here because the reason it was deferred — that designing
+for an archive before one existed would be speculation — is the reason §8 reads
+the way it does.
+
+---
+
+## §8 Archived changes
+
+`CLAUDE.md` says a change folder is a bare slug and takes a date prefix when it
+moves to `archive/`. `Q-OPS-6` asked what the checker should then do with it,
+and deliberately implemented nothing until there was one to look at. There now
+is: `monorepo-workspace` and `container-verbs` finished, and
+`openspec/changes/archive/` exists.
+
+The distinction the whole section turns on: **`archive/` is a container, an
+entry inside it is a change.**
+
+| Question | Answer | Enforced by |
+|---|---|---|
+| Is `archive/` itself a change? | No. It holds no `proposal.md` and needs none. | `R-STRUCT` skips it |
+| Does it need an index row? | No. The index lists what is live. | `R-STRUCT` compares the index against the live directories only |
+| What may an entry be called? | `<YYYY-MM-DD>-<slug>` and nothing else. | `R-STRUCT` |
+| Does an archived change keep its four files? | Yes. It is the record of what was proposed and what was accepted; a change that loses `design.md` on the way into the archive has been deleted, not archived. | `R-STRUCT` |
+| Do its identifiers still resolve? | Yes, unchanged. They were never special. | `R-REF` |
+| Does `R-TRACE` still apply inside it? | Yes. | `R-TRACE` |
+| Does the date prefix change the child-code legend? | No. The legend is keyed on the **bare** slug. | `R-ID` |
+
+Three of those deserve their reason written down.
+
+### The index lists what is live, so a stale row is an error
+
+A row for a folder that has moved is the index lying about where something is,
+which is the failure `R-STRUCT`'s index clause already exists to catch. It is
+reported with the folder it moved to, because *"names a directory that does not
+exist"* sends a reader looking for a deletion that did not happen.
+
+An archived change may still be *listed* — `changes/README.md` carries an
+`Archived` table — but those rows name the full `archive/<date>-<slug>/` path,
+which is not the index row's shape. The checker reads them only through
+`R-LINK`, which is the right amount: the link has to resolve, and nothing else
+about the row is load-bearing.
+
+### Archiving discharges no criterion
+
+The tempting rule is the opposite one: the work is finished, so let `R-TRACE`
+stop asking. It is wrong for the same reason `R-TRACE` is called traceability
+and not coverage (§3). The rule proves somebody signed up to meet a criterion.
+Archiving is a claim that they did — so the trace is the *evidence* for the
+archival, and dropping it exactly when the claim is made removes the check at
+the one moment it is worth running. An archive that exempts itself is a place
+criteria go to stop being checked.
+
+The same argument gives `R-REF` for free: an archived change is referred to by
+the live corpus — the parent's delegation table points into both of the folders
+archived so far — so its identifiers must keep resolving. They do, because
+nothing ever made them conditional on where the file sat.
+
+### The legend is keyed on the bare slug
+
+`V-MW-1` is `monorepo-workspace`'s criterion whether the folder is
+`monorepo-workspace/` or `archive/2026-09-15-monorepo-workspace/`. So `R-ID`
+strips the date prefix before it asks which change a document belongs to, and
+the legend in `../README.md` keeps `MW` and `CV` after the move — their criteria
+still exist and are still checked.
+
+This also made the legend worth reading properly. It was parsed as a *set* of
+known codes, which cannot see a code used by the wrong change; it is now parsed
+as a binding, `code → bare slug`, and a criterion defined outside the change its
+code names is an error. That is what *"keyed on the bare slug"* means
+operationally, and without it the clause would have no referent.
+
+### What is deliberately still not checked
+
+- **When a change may be archived.** That is the owner's call and a matter of
+  whether the tasks are actually done; the checker sees a folder, not a
+  judgement.
+- **That the date is the date it was archived.** It is a name, and no clock the
+  script can read will confirm it.
+- **That `current/` reflects what was archived.** `current/` is filled by
+  `T-8.2`, after deploy, and nothing yet says what the relationship is.

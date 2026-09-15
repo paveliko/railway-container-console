@@ -1,11 +1,11 @@
 # Design: `monorepo-workspace`
 
 Rests on `D-OPS-2` (workspace shape) and `D-OPS-3` (Just-in-Time packages) in
-[`../../decisions.md`](../../decisions.md), both **ratified 2026-09-14** with
+[`../../../decisions.md`](../../../decisions.md), both **ratified 2026-09-14** with
 the owner's amendments — four packages including `@repo/ui`, and a per-package
 `typecheck` in place of the "pnpm proves isolation" argument. Everything about
 what the console *does* is unchanged and lives in the parent change's
-[`design.md`](../railway-container-control/design.md); this document only says
+[`design.md`](../../railway-container-control/design.md); this document only says
 where each piece lives and what it may see.
 
 ## 1. Layout
@@ -72,7 +72,7 @@ anything it must not know, and the import fails to resolve. The rule is
 mechanical, so it survives review fatigue.
 
 `ui` starts with four components because those are the four the screen in
-[`../console-screen/`](../console-screen/) actually renders. It grows by the
+[`../../console-screen/`](../../console-screen/) actually renders. It grows by the
 same test: a component moves into `ui` when a **second** caller needs it and
 it does not know the product. Nothing is added speculatively.
 

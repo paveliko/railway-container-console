@@ -52,7 +52,7 @@ Rules:
 > `@repo/container-core`, `@repo/railway-client`, `@repo/ui` — plus the route
 > handlers inside `apps/console`, with `ContainerState` living in
 > `@repo/contracts`. The authoritative tree is
-> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1 and the
+> [`../archive/2026-09-15-monorepo-workspace/design.md`](../archive/2026-09-15-monorepo-workspace/design.md) §1 and the
 > rules at the end of this section are restated per package in its §6. The
 > diagram below is kept as the statement of *what the layers are for*; read the
 > folder names as package names:
@@ -91,7 +91,7 @@ Rules:
 
 Rules the layering enforces (each is a line in `verification.md`; all five in
 their per-package form are in
-[`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §6):
+[`../archive/2026-09-15-monorepo-workspace/design.md`](../archive/2026-09-15-monorepo-workspace/design.md) §6):
 
 - Nothing outside `@repo/railway-client` imports a `.graphql` document or
   mentions the host.
@@ -370,7 +370,7 @@ There is no route to choose a project, environment or service.
 > **Superseded in layout by `D-OPS-2`, ratified 2026-09-14.** The layout below
 > is the single-application one that PR #4 merged, kept here as history. The
 > workspace layout that replaced it is
-> [`../monorepo-workspace/design.md`](../monorepo-workspace/design.md) §1; the
+> [`../archive/2026-09-15-monorepo-workspace/design.md`](../archive/2026-09-15-monorepo-workspace/design.md) §1; the
 > runtime constraints in this section do not change, and neither does the *no
 > codegen* paragraph — `check-operations.ts` simply moved into
 > `@repo/railway-client`.

@@ -4,8 +4,8 @@
 optional gate) · **Parent change:**
 [`../railway-container-control/`](../railway-container-control/), tasks T-4.3,
 T-4.4, T-6.1, T-6.2.
-**Blocked on:** [`../monorepo-workspace/`](../monorepo-workspace/) for
-everything; [`../container-verbs/`](../container-verbs/) for the two `POST`
+**Blocked on:** [`../archive/2026-09-15-monorepo-workspace/`](../archive/2026-09-15-monorepo-workspace/) for
+everything; [`../archive/2026-09-15-container-verbs/`](../archive/2026-09-15-container-verbs/) for the two `POST`
 routes only. The two `GET` routes, the runtime singleton and the fake Railway
 can be built before `Q-API-2` is signed.
 

@@ -36,8 +36,8 @@ already done stays done and is listed as such.
 
 | Parent task | Status on `main` | Now lives in | Blocked on |
 |---|---|---|---|
-| T-2.1 Scaffold | done as a single app (PR #4) — **superseded**; `D-OPS-2` / `D-OPS-3` ratified 2026-09-14, the move is in flight | [`../monorepo-workspace/`](../monorepo-workspace/) | ~~`D-OPS-2`, `D-OPS-3`~~ signed 2026-09-14; `Q-UI-5`, `Q-SEC-5` still owner-open, defaults applied |
-| T-2.2 Schema gate | done (PR #4) | `monorepo-workspace` T-MW-2.3 (moves it) | — |
+| T-2.1 Scaffold | done as a single app (PR #4) — **superseded**; `D-OPS-2` / `D-OPS-3` ratified 2026-09-14, the move is in flight | [`../archive/2026-09-15-monorepo-workspace/`](../archive/2026-09-15-monorepo-workspace/) | ~~`D-OPS-2`, `D-OPS-3`~~ signed 2026-09-14; `Q-UI-5`, `Q-SEC-5` still owner-open, defaults applied |
+| T-2.2 Schema gate | done (PR #4) | `monorepo-workspace` T-MW-2.3 (moves it) — now [`../archive/2026-09-15-monorepo-workspace/`](../archive/2026-09-15-monorepo-workspace/) | — |
 | T-2.3 Account safety | **partly** — the usage limit is still not set | [`../deploy-on-railway/`](../deploy-on-railway/) T-DR-0 | owner |
 | T-3.1 Credential + transport + errors | done, 28 tests (PR #4) | `monorepo-workspace` T-MW-2.3 (moves it) | — |
 | T-3.2 Poller | done, 9 tests (PR #4) | `monorepo-workspace` T-MW-2.2 (moves it) | — |
@@ -45,13 +45,13 @@ already done stays done and is listed as such.
 | T-3.4 Experiment | done 2026-09-14 | `_research/` | — |
 | T-3.5 Close `Q-OPS-2` | not started | stays here, owner reads the usage page | time |
 | T-4.1 State derivation | done, 27 tests (PR #4) | `monorepo-workspace` T-MW-2.2 (moves it) | — |
-| T-4.2 Verbs | **implemented** in `vite-console` T-VC-2.1, T-VC-2.2 (PR #8) · verification partial | [`../container-verbs/`](../container-verbs/) T-CV-1, T-CV-2 done; T-CV-3 open on `V-CV-3` | ~~`Q-API-2`~~ closed 2026-09-15 by `D-API-5`; a `REMOVED` fixture for `up()` |
-| T-4.3 Runtime singleton | **implemented** in `vite-console` T-VC-3.1 · verification partial | [`../console-server/`](../console-server/) T-CS-1, open on `V-CS-2` | a test for `toConsoleError` |
-| T-4.4 Routes | **implemented** in `vite-console` T-VC-3.1, T-VC-3.2, T-VC-3.3 · verification partial | `console-server` T-CS-3 (GET, open on `V-CS-8`), T-CS-4 (POST, open on `V-CS-5`) | a `consoleErrorSchema` snapshot; a phase-sequence run against the fake Railway |
-| T-5.1 The screen | **implemented** in `vite-console` T-VC-4.1 … T-VC-4.4 · verification partial | [`../console-screen/`](../console-screen/) T-SC-1 (open on `V-SC-3`, `V-SC-6`), T-SC-2 (open on `V-SC-4`, `V-SC-5`, `V-SC-7`) | five criteria with no run — the largest debt of the three |
-| T-5.2 Bundle hygiene | **implemented** — the grep is at `apps/console/vite.config.ts:29` (`vite-console` T-VC-5.1) · unverified | `console-screen` T-SC-3, open on `V-SC-8` | a logged break-and-revert |
+| T-4.2 Verbs | **done** 2026-09-15 — implemented in `vite-console` T-VC-2.1, T-VC-2.2 (PR #8), and `V-CV-3` run, closing T-CV-3 | [`../archive/2026-09-15-container-verbs/`](../archive/2026-09-15-container-verbs/) — **archived**, T-CV-0 … T-CV-4 all done | — |
+| T-4.3 Runtime singleton | **done** 2026-09-15 — implemented in `vite-console` T-VC-3.1, and `V-CS-2` run | [`../console-server/`](../console-server/) T-CS-1 done | — |
+| T-4.4 Routes | **done** 2026-09-15 — implemented in `vite-console` T-VC-3.1, T-VC-3.2, T-VC-3.3, and `V-CS-8` and `V-CS-5` run | `console-server` T-CS-3, T-CS-4 both done | — |
+| T-5.1 The screen | **done** 2026-09-15 — implemented in `vite-console` T-VC-4.1 … T-VC-4.4, and `V-SC-3` … `V-SC-7` run | [`../console-screen/`](../console-screen/) T-SC-1, T-SC-2 both done | — |
+| T-5.2 Bundle hygiene | **done** 2026-09-15 — and it was not implemented before: `vite.config.ts:29` was a *comment* describing the grep, not the grep. `scripts/check-bundle.mjs` is the step, run from the app's `build` | `console-screen` T-SC-3 done | — |
 | T-6.1 Fake Railway e2e | **done** for the fake (`vite-console` T-VC-3.4, `console-server` T-CS-2); the live origin check is not started | `console-server` T-CS-2 done; T-CS-5 open on `V-CS-9` | a headless browser |
-| T-6.2 Failure paths | **implemented** in `vite-console` T-VC-3.2 — the `RailwayError → ConsoleError` mapping and the parametrised failure table · verification partial | `console-server` T-CS-4, open on `V-CS-5` | the phase sequence; the `GET /state` clause of `V-CS-6` |
+| T-6.2 Failure paths | **done** 2026-09-15 — implemented in `vite-console` T-VC-3.2, and both gaps closed: the phase sequence against the fake Railway, and `V-CS-6`'s `GET /state` clause | `console-server` T-CS-4 done | — |
 | T-6.3 Idle budget, live | not started | stays here — one logged 10-minute run once `console-server` lands | token |
 | T-7.1 – T-7.3 Deployment | not started | [`../deploy-on-railway/`](../deploy-on-railway/) | owner, everything else |
 
@@ -69,35 +69,37 @@ already done stays done and is listed as such.
 
 ## Ready to start now, without waiting on anyone
 
-**The code landed.** `vite-console` (PR #8) wrote the bodies of
-`container-verbs`, `console-server` and `console-screen`; the workspace was
-signed 2026-09-14 and `Q-API-2` closed 2026-09-15. What is left that needs
-nobody's signature is verification, and there is a real amount of it — PR #8
-verified its own `V-VC-N` and left eleven of the three children's criteria
-unrun:
+**The verification debt is paid.** `vite-console` (PR #8) wrote the bodies of
+`container-verbs`, `console-server` and `console-screen` and verified its own
+`V-VC-N`, leaving eleven of the three children's criteria unrun. Ten were closed
+2026-09-15: `V-CV-3`, `V-CS-2`, `V-CS-5`, `V-CS-8` and `V-CS-6`'s trailing
+clause, `V-SC-3` … `V-SC-8`. That closed `T-CV-3`, `T-CS-1`, `T-CS-3`, `T-CS-4`,
+`T-SC-1`, `T-SC-2` and `T-SC-3`, and with `T-CV-4` it let `container-verbs` be
+archived.
 
-- `V-CV-3` — a `REMOVED` fixture, so `up()`'s deploy branch is tested and not
-  merely inferred. Closes `T-CV-3`.
-- `V-CS-2` — a test for `toConsoleError`'s `ConfigError → 500`. Closes `T-CS-1`.
-- `V-CS-8` — the `consoleErrorSchema` snapshot over every kind the routes
-  produce. Closes `T-CS-3`.
-- `V-CS-5` — the phase sequence driven against `test/fake-railway.ts`, plus
-  `V-CS-6`'s trailing clause. Closes `T-CS-4`.
-- `V-SC-3`, `V-SC-6` — the read-before-stream ordering and the rejected SSE
-  body. Closes `T-SC-1`.
-- `V-SC-4`, `V-SC-5`, `V-SC-7` — the URL cleared on `down`, the `502` with a
-  `traceId` rendered, and the storage measurement. Closes `T-SC-2`.
-- `V-SC-8` — a logged break-and-revert of the bundle grep. Closes `T-SC-3`.
+One of the ten was not a missing test but a missing check: `V-SC-8` and `T-SC-3`
+recorded the bundle grep as present at `apps/console/vite.config.ts:29`, and
+that line was a comment describing a grep that existed nowhere. It is now
+`scripts/check-bundle.mjs`, run from the app's `build`. `console-screen` design
+§3 records the correction.
+
+What is left that needs nobody's signature:
+
 - `V-CS-9` — the `live` origin check: a headless browser loading the running
-  console and making requests to its own origin only. Closes `T-CS-5`. This one
-  needs a browser dependency the repository does not have, so it is
-  owner-independent but not free.
+  console and making requests to its own origin only. Closes `T-CS-5`. **The one
+  criterion in the three children still unrun.** It needs a browser dependency
+  the repository does not have, so it is owner-independent but not free, and an
+  agent should not add Playwright unasked. One logged manual run is the other
+  way to discharge it.
+- `T-SC-4` — the screen against the real server, which needs `.env.local` and a
+  token. Read-only, and blocked on nothing but that.
+- `T-3.5` — read the Railway usage page and close `Q-OPS-2`.
+- `T-6.3` — the idle-budget run, which needs the token.
+- The paperwork `deploy-on-railway` `T-DR-1.1` carries.
 
-Eleven in total. None of them needs a decision; all of them need someone to sit
-down and write a test.
-
-Also owner-independent: T-3.5, and the paperwork `deploy-on-railway` T-DR-1.1
-carries.
+`T-CS-6` and `T-SC-5` are the two children's own paperwork rows, and each waits
+on the one open task above it — so neither `console-server` nor `console-screen`
+can be archived yet.
 
 ## Cannot start until the owner acts
 

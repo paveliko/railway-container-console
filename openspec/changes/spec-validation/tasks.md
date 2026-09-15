@@ -62,3 +62,17 @@
 - [x] **T-SV-11 Paperwork.** Result: `changes/README.md` gains the row and `SV`
   in the child-code legend; `Q-OPS-6` and `Q-OPS-7` registered; `README.md`
   §Running it names the fourth checker. Depends on: T-SV-10.
+- [x] **T-SV-12 Close `Q-OPS-6`: the archive.** Result: `archive/` is a
+  container and not a change — exempt from the four files and from the index
+  row; an entry under it is named `<YYYY-MM-DD>-<slug>` and keeps its four
+  files; identifiers inside it stay resolvable and `R-TRACE` still runs there;
+  the child-code legend is read as a binding `code → bare slug`, so the date
+  prefix changes nothing. Design §8, the §7 bullet it replaces amended in place
+  rather than deleted, `Q-OPS-6`'s closure appended to its section. Five
+  fixtures — `green-archived-change`, `struct-archive-undated`,
+  `struct-archive-missing-file`, `id-archived-legend-slug`,
+  `trace-archived-unreachable`. Depends on: T-SV-11. Acceptance: V-SV-18,
+  V-SV-19. Verified by: `pnpm check:specs:self-test` and `pnpm check:specs`,
+  plus the break-and-revert logged in the PR. *Written because
+  `monorepo-workspace` and `container-verbs` are ready to archive and the
+  checker would have refused the folder twice.*

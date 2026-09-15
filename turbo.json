@@ -4,7 +4,8 @@
     "tsconfig.base.json",
     "DESIGN.md",
     "scripts/design-model.mjs",
-    "scripts/design-tokens.mjs"
+    "scripts/design-tokens.mjs",
+    "scripts/check-bundle.mjs"
   ],
   "tasks": {
     "check": {

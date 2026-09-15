@@ -103,6 +103,41 @@ see [`design.md`](design.md) §1.
 - V-SV-17 `build` — `pnpm verify` succeeds on a clean clone with no `.env`, no
   network and no Railway token. `check-specs.mjs` reads only the working tree.
 
+## The archive
+
+Added 2026-09-15, closing `Q-OPS-6`. The semantics and the reasoning are
+[`design.md`](design.md) §8.
+
+- V-SV-18 `build` — **`archive/` is a container; an entry inside it is a
+  change.** `changes/archive/` needs none of the four files and no row in
+  `changes/README.md`'s index, and its presence alone leaves
+  `node scripts/check-specs.mjs` at exit 0. Each entry under it is named
+  `<YYYY-MM-DD>-<slug>` — a bare or undated name is an `R-STRUCT` error naming
+  the folder — and keeps all four files, so an archived change that lost
+  `design.md` fails exactly as a live one does. The index lists the **live**
+  directories: a row left behind for a change that has moved is an `R-STRUCT`
+  error that names the `archive/<date>-<slug>/` it moved to, rather than
+  claiming the directory does not exist. The child-code legend is keyed on the
+  **bare** slug, so `V-MW-1` defined in
+  `archive/2026-09-15-monorepo-workspace/` is legal on the same legend line that
+  made it legal before the move; a criterion whose code the legend binds to a
+  different change is an `R-ID` error. *Covered:* fixtures
+  `green-archived-change`, `struct-archive-undated`,
+  `struct-archive-missing-file`, `id-archived-legend-slug`; and the
+  break-and-revert of `V-SV-1`'s form logged in the PR — add
+  `changes/archive/undated-thing/`, watch `R-STRUCT` name it, revert.
+- V-SV-19 `build` — **Archiving discharges no criterion and breaks no
+  reference.** Every `V-` and `T-` defined under `changes/archive/` stays in the
+  resolvable set, so a reference from the live corpus into an archived change
+  resolves like any other (`R-REF`) — including the parent's delegation cells,
+  which point into both folders archived so far. `R-TRACE` still runs inside the
+  archive: an archived criterion that no task's `Acceptance:` reaches is an
+  error there exactly as it is outside, because the trace is the evidence for
+  the archival and not something the archival replaces. *Covered:* fixtures
+  `green-archived-change` (a reference from the live change into the archived
+  one, and the archived change's own task reaching its criterion) and
+  `trace-archived-unreachable`.
+
 ## What is not verified here
 
 - Whether a claim marker is true, whether a criterion is falsifiable, whether a

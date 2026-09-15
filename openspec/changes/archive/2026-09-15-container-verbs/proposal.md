@@ -1,10 +1,10 @@
 # Proposal: `container-verbs`
 
 **Status:** proposed · **Capabilities:** `API` · **Parent change:**
-[`../railway-container-control/`](../railway-container-control/), task T-4.2.
+[`../../railway-container-control/`](../../railway-container-control/), task T-4.2.
 **Blocked on the owner for:** `Q-API-2` — what "down" does — and therefore
 `D-API-5` moving to `ratified`. Also on
-[`../monorepo-workspace/`](../monorepo-workspace/) landing, because the verbs
+[`../2026-09-15-monorepo-workspace/`](../2026-09-15-monorepo-workspace/) landing, because the verbs
 extend the `ContainerProvider` port that change introduces.
 
 ## The problem
@@ -37,7 +37,7 @@ Three things, all in packages that exist after `monorepo-workspace`:
 
 | Left out | Why |
 |---|---|
-| Routes that call `up()` / `down()` | [`../console-server/`](../console-server/) |
+| Routes that call `up()` / `down()` | [`../../console-server/`](../../console-server/) |
 | A live mutating test | It starts and stops a real container; the owner does that by hand in `deploy-on-railway` (parent T-7.3). A `test:live:mutate` gated on an explicit `RAILWAY_ALLOW_MUTATION=1` is the optional extension, not built |
 | Restart / Redeploy / Rollback as separate verbs | parent design §12 |
 

@@ -1,0 +1,5 @@
+{
+  "problems": [
+    { "rule": "R-STRUCT", "id": "retired" }
+  ]
+}

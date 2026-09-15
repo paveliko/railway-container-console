@@ -120,7 +120,8 @@ Ordered. Nothing below the line starts before the line is crossed.
       and `D-OPS-3` (packages consumed from source, no `dist/`, a `typecheck`
       per package) are `ratified`, each with an owner's amendment recorded in
       place. Implemented in
-      [`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/).
+      [`openspec/changes/archive/2026-09-15-monorepo-workspace/`](openspec/changes/archive/2026-09-15-monorepo-workspace/),
+      and archived there on 2026-09-15.
 - [ ] **Answer `Q-UI-5` and `Q-SEC-5`** — where the two Railway status enums
       live, and who reads the environment. Both were left open at ratification;
       the code applies each question's registered default and marks it at the
@@ -148,8 +149,8 @@ what the customers page actually says. Update the `[to-verify]` marks.
 - [ ] **Read the usage page** a day later and close `Q-OPS-2` — is a stopped
       deployment billed? (T-3.5)
 - [x] ~~**Then build**~~ — the order held, and everything but the last step has
-      landed: [`monorepo-workspace`](openspec/changes/monorepo-workspace/) →
-      [`container-verbs`](openspec/changes/container-verbs/) →
+      landed: [`monorepo-workspace`](openspec/changes/archive/2026-09-15-monorepo-workspace/) →
+      [`container-verbs`](openspec/changes/archive/2026-09-15-container-verbs/) →
       [`console-server`](openspec/changes/console-server/) →
       [`console-screen`](openspec/changes/console-screen/) →
       [`deploy-on-railway`](openspec/changes/deploy-on-railway/) → README and
@@ -186,6 +187,7 @@ packages/
 └── ui/                @repo/ui              Button · Badge · Card · Spinner — react and nothing else
 scripts/
 ├── check-boundaries.mjs   the eight rules pnpm and the exports maps cannot see
+├── check-bundle.mjs       the built assets, for Railway's host and a build-time token
 ├── check-design.mjs       every contrast ratio in DESIGN.md, recomputed from the hex
 ├── check-designmd.mjs     DESIGN.md against the published @google/design.md format
 ├── check-specs.mjs        the openspec/ corpus: identifiers, references, traceability
@@ -209,8 +211,9 @@ openspec/
 ├── _research/         source material — every claim marked [observed] / [inferred] / [to-verify]
 ├── changes/
 │   ├── railway-container-control/   the parent: proposal, design, 60 criteria (V-N), tasks as an index
-│   ├── monorepo-workspace/          the workspace above — signed, implemented
-│   ├── container-verbs/             up() / down() — built; Q-API-2 closed
+│   ├── archive/                     changes whose work is finished; the folder gains its date here
+│   │   ├── 2026-09-15-monorepo-workspace/   the workspace above — signed, implemented
+│   │   └── 2026-09-15-container-verbs/      up() / down() — built; Q-API-2 closed
 │   ├── console-server/              runtime, four routes, SSE, fake Railway — built
 │   ├── console-screen/              the one screen — built
 │   ├── design-system/               DESIGN.md as the single source for every token
@@ -239,10 +242,12 @@ pnpm verify       # everything below, in dependency order — run this before pu
 
 There is no CI workflow; `pnpm verify` is the gate, and it is hermetic — no
 secret, no network, no Railway — so it gives the same answer on any clean
-clone. Four of its checks prove themselves: `check-design.mjs` and
+clone. Several of its checks prove themselves: `check-design.mjs` and
 `check-specs.mjs` each run a suite of fixtures whose red *and* green paths are
 committed, `check-styles.mjs` proves its probe by removing `@source` and
-rebuilding, and every rule in `check-specs.mjs` has a logged break-and-revert.
+rebuilding, `check-bundle.mjs` was proved by importing the Railway client into a
+client component and watching the build fail, and every rule in
+`check-specs.mjs` has a logged break-and-revert.
 A check whose failure path is untested is not a guarantee. Its parts, when you
 want one on its own:
 
@@ -250,8 +255,10 @@ want one on its own:
 pnpm check        # the operations gate, the boundary rules, the two design
                   # checks, and the specification corpus
 pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
-pnpm test         # 164 tests across the four packages and the app
-pnpm build        # runs the operations gate first, then vite build
+pnpm test         # 193 tests across the four packages and the app
+pnpm build        # runs the operations gate first, then vite build, then
+                  # greps everything emitted for Railway's host and for a
+                  # build-time token — V-15, and a leak fails the build
 pnpm dev          # one process at apps/console — Vite in middleware mode,
                   # packages picked up from source through tsx
 ```

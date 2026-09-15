@@ -17,6 +17,8 @@
  *
  * What this cannot see at all is listed in that change's `design.md` §7 —
  * notably rule 5, which is about a *change* to a file and needs a git base.
+ * What it does with an archived change — `changes/archive/<date>-<slug>/` — is
+ * design §8, and it is the answer to `Q-OPS-6` rather than a parser detail.
  *
  * `--self-test` runs the fixtures under `scripts/__fixtures__/specs/`, which
  * exist so that each rule is proved in both directions. A check whose red path
@@ -52,6 +54,32 @@ const ANY_ID = `(?:${V_ID}|${T_ID}|${QD_ID})`;
 const REFERENCE = new RegExp(`(?<!example:)\\b(${ANY_ID})\\b`, 'g');
 const EXAMPLE = new RegExp(`\\bexample:(${ANY_ID})\\b`, 'g');
 const ELLIPSIS = /\s*(?:…|\.\.\.)\s*/;
+
+/**
+ * An archived change. See `changes/spec-validation/design.md` §8.
+ *
+ * `CLAUDE.md` says the date prefix is added when a change moves to `archive/`,
+ * so the prefix is the only difference between the two forms and the slug is
+ * what every other rule keys on. Capturing both is what lets `V-MW-1` stay
+ * legal inside `archive/2026-09-15-monorepo-workspace/`.
+ */
+const ARCHIVE = 'archive';
+const ARCHIVE_ENTRY = /^(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)$/;
+
+/**
+ * The bare slug of the change a document belongs to, date prefix removed, or
+ * `null` for a file that is not inside one — `changes/README.md`, or anything
+ * outside `changes/` altogether.
+ */
+function changeOf(rel) {
+  const parts = rel.split('/');
+  if (parts[0] !== 'changes') return null;
+  if (parts[1] === ARCHIVE) {
+    if (parts.length < 4) return null;
+    return ARCHIVE_ENTRY.exec(parts[2])?.[2] ?? parts[2];
+  }
+  return parts.length < 3 ? null : parts[1];
+}
 
 // ---------------------------------------------------------------------------
 // Reading.
@@ -190,7 +218,7 @@ function parseCorpus(root) {
         if (criteria.has(id)) criterionDupes.push({ id, file: f.rel, line: item.line, first: criteria.get(id) });
         else criteria.set(id, {
           file: f.rel, line: item.line, text: item.text, kind,
-          retired: Boolean(struck), change: f.rel.split('/')[1],
+          retired: Boolean(struck), change: changeOf(f.rel),
         });
       }
     }
@@ -268,10 +296,19 @@ function parseCorpus(root) {
   readRegister('open-questions.md', 'Q');
 
   // Change folders and the index that is supposed to list them.
+  //
+  // `archive/` is a container, not a change: it has no four files of its own and
+  // no index row, and its entries are changes whose work is finished. Design §8.
   const changesDir = join(root, 'changes');
-  const changeDirs = existsSync(changesDir)
-    ? readdirSync(changesDir).filter((n) => !n.startsWith('.') && statSync(join(changesDir, n)).isDirectory()).sort()
-    : [];
+  const directoriesIn = (dir) => (existsSync(dir)
+    ? readdirSync(dir).filter((n) => !n.startsWith('.') && statSync(join(dir, n)).isDirectory()).sort()
+    : []);
+  const changeDirs = directoriesIn(changesDir).filter((n) => n !== ARCHIVE);
+  const archived = directoriesIn(join(changesDir, ARCHIVE)).map((name) => ({
+    name,
+    rel: `${ARCHIVE}/${name}`,
+    slug: ARCHIVE_ENTRY.exec(name)?.[2] ?? null,
+  }));
   const indexFile = byRel.get('changes/README.md');
   const indexed = indexFile
     ? [...indexFile.text.matchAll(/^\| \[`([a-z0-9-]+)\/`\]/gm)].map((m) => m[1])
@@ -279,17 +316,22 @@ function parseCorpus(root) {
   const parent = indexFile
     ? /^\| \[`([a-z0-9-]+)\/`\][^|]*\|[^|]*\*\*parent\*\*/m.exec(indexFile.text)?.[1] ?? null
     : null;
+  // The child-code legend, read as a binding rather than a list: `CV` is not
+  // merely a known code, it is `container-verbs`' code. The value is the **bare**
+  // slug, which is why archiving a change leaves the legend untouched — design §8.
+  //
+  // Both spellings in one pattern: `` `CV` for `container-verbs` `` and the
+  // longer `` `V-MW-N` / `T-MW-N` for `monorepo-workspace` ``. The line wraps in
+  // the real index, so this runs over the whole text and not line by line.
+  const LEGEND = /`(?:[VT]-)?([A-Z]{2})(?:-N)?`(?:\s*\/\s*`[^`]*`)*\s+for\s+`([a-z0-9-]+)`/g;
   const legend = indexFile
-    ? new Set([
-        ...[...indexFile.text.matchAll(/`([A-Z]{2})` for/g)].map((m) => m[1]),
-        ...[...indexFile.text.matchAll(/`[VT]-([A-Z]{2})-N`/g)].map((m) => m[1]),
-      ])
+    ? new Map([...indexFile.text.matchAll(LEGEND)].map((m) => [m[1], m[2]]))
     : null;
 
   return {
     root, files, byRel, criteria, criterionDupes, tasks, taskDupes,
     taskIndex, taskIndexDupes, taskGroups, decisions, questions,
-    changeDirs, indexed, legend, parent,
+    changeDirs, archived, indexed, legend, parent,
   };
 }
 
@@ -305,20 +347,42 @@ export function checkCorpus(root) {
   const err = (rule, file, line, id, message) => add(rule, 'error', file, line, id, message);
   const warn = (rule, file, line, id, message) => add(rule, 'warning', file, line, id, message);
 
-  // -- R-STRUCT (V-SV-5) ----------------------------------------------------
-  for (const dir of c.changeDirs) {
-    for (const required of ['proposal.md', 'design.md', 'verification.md', 'tasks.md']) {
-      if (!existsSync(join(root, 'changes', dir, required)))
-        err('R-STRUCT', `changes/${dir}`, 0, dir, `${required} is missing`);
+  // -- R-STRUCT (V-SV-5, V-SV-18) -------------------------------------------
+  const REQUIRED = ['proposal.md', 'design.md', 'verification.md', 'tasks.md'];
+  const requireFour = (rel, id) => {
+    for (const required of REQUIRED) {
+      if (!existsSync(join(root, 'changes', rel, required)))
+        err('R-STRUCT', `changes/${rel}`, 0, id, `${required} is missing`);
     }
+  };
+  for (const dir of c.changeDirs) requireFour(dir, dir);
+
+  // An archived change keeps its four files — it is still the record of what was
+  // proposed and what was accepted — and its folder carries the date prefix that
+  // `CLAUDE.md` says archiving adds. A bare name here is a convention decaying
+  // quietly, so it is an error rather than something the parser shrugs off.
+  for (const entry of c.archived) {
+    if (entry.slug === null) {
+      err('R-STRUCT', `changes/${entry.rel}`, 0, entry.name,
+        `an archived change is named \`<YYYY-MM-DD>-<slug>/\`; \`${entry.name}/\` is not`);
+      continue;
+    }
+    requireFour(entry.rel, entry.slug);
   }
+
   if (c.indexed) {
+    // The index lists what is live. `archive/` is not a change and needs no row;
+    // neither does anything inside it.
     for (const dir of c.changeDirs)
       if (!c.indexed.includes(dir))
         err('R-STRUCT', 'changes/README.md', 0, dir, `the index does not list \`${dir}/\``);
-    for (const named of c.indexed)
-      if (!c.changeDirs.includes(named))
-        err('R-STRUCT', 'changes/README.md', 0, named, `the index names \`${named}/\`, which is not a directory`);
+    for (const named of c.indexed) {
+      if (c.changeDirs.includes(named)) continue;
+      const moved = c.archived.find((entry) => entry.slug === named);
+      err('R-STRUCT', 'changes/README.md', 0, named, moved
+        ? `the index still lists \`${named}/\`, which has been archived to \`${ARCHIVE}/${moved.name}/\``
+        : `the index names \`${named}/\`, which is not a directory`);
+    }
   }
   for (const row of [...c.decisions, ...c.questions]) {
     if (row.form === 'prose') continue;
@@ -327,7 +391,7 @@ export function checkCorpus(root) {
         'the row is separated from its table by a blank line, so it renders as literal text');
   }
 
-  // -- R-ID (V-SV-6) --------------------------------------------------------
+  // -- R-ID (V-SV-6, V-SV-18) --------------------------------------------------------
   const dense = (rows, label) => {
     for (const cap of CAPABILITIES) {
       const mine = rows.filter((r) => r.cap === cap);
@@ -355,16 +419,25 @@ export function checkCorpus(root) {
   for (const d of c.taskIndexDupes)
     err('R-ID', d.file, d.line, d.id, `${d.id} has a second index entry`);
 
+  // The legend binds a code to a change, and `meta.change` is the bare slug, so
+  // the binding survives archiving untouched: `V-MW-1` defined in
+  // `archive/2026-09-15-monorepo-workspace/` still reads as `monorepo-workspace`.
   for (const [id, meta] of c.criteria) {
     const code = /^V-([A-Z]{2})-/.exec(id)?.[1];
-    if (code && c.legend && c.legend.size && !c.legend.has(code))
-      err('R-ID', meta.file, meta.line, id, `child code \`${code}\` is not in the legend in changes/README.md`);
+    if (code && c.legend && c.legend.size) {
+      const owner = c.legend.get(code);
+      if (owner === undefined)
+        err('R-ID', meta.file, meta.line, id, `child code \`${code}\` is not in the legend in changes/README.md`);
+      else if (meta.change && owner !== meta.change)
+        err('R-ID', meta.file, meta.line, id,
+          `the legend binds \`${code}\` to \`${owner}\`, but ${id} is defined in \`${meta.change}\``);
+    }
     if (!code && c.parent && meta.change && meta.change !== c.parent)
       err('R-ID', meta.file, meta.line, id,
         `a plain \`${id}\` is the parent change's form; defined here it is ambiguous`);
   }
 
-  // -- R-REF (V-SV-7) -------------------------------------------------------
+  // -- R-REF (V-SV-7, V-SV-19) -------------------------------------------------------
   const defined = new Set([
     ...c.criteria.keys(), ...c.tasks.keys(), ...c.taskIndex.keys(), ...c.taskGroups,
     ...c.decisions.map((d) => d.id), ...c.questions.map((q) => q.id),
@@ -410,7 +483,7 @@ export function checkCorpus(root) {
         `the delegation cell names no task or change folder that exists`);
   }
 
-  // -- R-TRACE (V-SV-8) -----------------------------------------------------
+  // -- R-TRACE (V-SV-8, V-SV-19) -----------------------------------------------------
   const citedBy = new Map([...c.criteria.keys()].map((id) => [id, new Set()]));
   for (const [id, meta] of c.criteria) {
     const head = meta.text.split('\n')[0];
@@ -470,7 +543,7 @@ export function checkCorpus(root) {
     });
   }
 
-  // -- R-VOCAB (V-SV-10) ----------------------------------------------------
+  // -- R-VOCAB (V-SV-10, V-SV-18) ----------------------------------------------------
   for (const f of c.files) {
     if (f.rel.endsWith('tasks.md')) {
       f.lines.forEach((line, i) => {
@@ -479,8 +552,10 @@ export function checkCorpus(root) {
           err('R-VOCAB', f.rel, i + 1, null, `\`[${m[1]}]\` is not a checkbox state; use [x], [ ] or [~]`);
       });
     }
+    // An amendment names the change that made it, and archiving that change does
+    // not un-make the amendment — so an archived bare slug is as good a target.
     for (const m of f.text.matchAll(/\*\*Amended by `([a-z0-9-]+)`/g))
-      if (!c.changeDirs.includes(m[1]))
+      if (!c.changeDirs.includes(m[1]) && !c.archived.some((entry) => entry.slug === m[1]))
         err('R-VOCAB', f.rel, 0, null, `\`Amended by \\\`${m[1]}\\\`\` names no change folder`);
   }
   for (const [id, meta] of c.criteria)
@@ -544,6 +619,7 @@ export function checkCorpus(root) {
     tasks: c.tasks.size,
     decisions: c.decisions.length,
     questions: c.questions.length,
+    archived: c.archived.length,
     examplesSkipped,
   } };
 }
@@ -592,6 +668,7 @@ if (process.argv.includes('--self-test')) {
   console.log(
     `Spec check passed: ${stats.documents} documents, ${stats.criteria} criteria, ` +
     `${stats.tasks} tasks, ${stats.decisions} decisions, ${stats.questions} questions, ` +
+    `${stats.archived} archived change(s), ` +
     `${warnings.length} warning(s), ${stats.examplesSkipped} example reference(s) skipped.`,
   );
 }

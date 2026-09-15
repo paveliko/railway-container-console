@@ -26,15 +26,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // `V-15` greps the built assets for the Railway host and for a sentinel
-    // token. A source map makes that grep an inspection rather than a search
-    // through minified soup.
+    // `scripts/check-bundle.mjs` greps everything emitted here for the Railway
+    // host and for a sentinel token — it runs from this package's `build`
+    // script, right after this. A source map makes that grep an inspection
+    // rather than a search through minified soup, and puts the map itself in
+    // scope, since it is served beside the chunk it describes.
     sourcemap: true,
   },
 
   // Deliberately absent: `define`, and any widening of `envPrefix`. Vite exposes
   // only `VITE_*` to the browser and the console has none, so no `RAILWAY_*`
   // value can reach a chunk by accident. That is not on its own a proof — the
-  // boundary checker's client-graph walk and the grep of the built files are
-  // the other two thirds of `V-15`.
+  // boundary checker's client-graph walk and `scripts/check-bundle.mjs` are the
+  // other two thirds of `V-15`.
 });

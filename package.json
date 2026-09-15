@@ -21,6 +21,7 @@
     "check:designmd": "node scripts/check-designmd.mjs",
     "check:styles": "node scripts/check-styles.mjs",
     "check:styles:self-test": "node scripts/check-styles.mjs --self-test",
+    "check:bundle": "node scripts/check-bundle.mjs",
     "check:specs": "node scripts/check-specs.mjs",
     "check:specs:self-test": "node scripts/check-specs.mjs --self-test"
   },

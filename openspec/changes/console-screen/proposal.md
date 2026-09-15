@@ -3,7 +3,7 @@
 **Status:** proposed · **Capabilities:** `UI` · **Parent change:**
 [`../railway-container-control/`](../railway-container-control/), tasks T-5.1,
 T-5.2. **Requirement served:** R-4 — *a UI component, not just a backend*.
-**Blocked on:** [`../monorepo-workspace/`](../monorepo-workspace/); the two
+**Blocked on:** [`../archive/2026-09-15-monorepo-workspace/`](../archive/2026-09-15-monorepo-workspace/); the two
 `GET` routes of [`../console-server/`](../console-server/) for a real run,
 though every component test runs against a fake server.
 
