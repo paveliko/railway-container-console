@@ -40,7 +40,7 @@ export type Env = Record<string, string | undefined>;
  * then fails on the first press.
  *
  * This used to be one `fromEnv` returning credential, target *and*
- * `CONSOLE_PASSPHRASE`. The passphrase is a console concern (`Q-SEC-4`) and
+ * `CONSOLE_PASSPHRASE`. The passphrase is a console concern (`D-SEC-2`) and
  * this package may not know one, so it split in two and the composition moved
  * to `apps/console/src/server/config.ts` — `Q-SEC-5`'s registered default,
  * still open. `V-1 … V-4` are unchanged by the split.

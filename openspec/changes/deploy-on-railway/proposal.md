@@ -5,7 +5,8 @@
 T-7.1 … T-7.3. **Requirement served:** R-5.
 **Blocked on the owner for:** the account usage limit (parent T-2.3, `V-56`),
 creating project B's target and project A's console service (`D-OPS-1`), and
-the passphrase (`Q-SEC-4`). Blocked on every other change landing.
+and the passphrase value (`D-SEC-2`; the decision is made, the secret is the
+owner's to choose and to deliver). Blocked on every other change landing.
 
 ## The problem
 
@@ -26,8 +27,12 @@ and runs that is `Q-OPS-3`, `[to-verify]` until the first deploy.
 - **Target first.** The experiment's service `target` (`nginx:alpine`, left
   stopped) becomes project B's target, or a fresh one is created — owner's
   choice; serverless off, one replica, restart on failure.
-- **Console second.** Project A, the six variables from parent design §3, a
-  public domain, no passphrase unless `Q-SEC-4` says so.
+- **Console second.** Project A, the six variables from parent design §3 —
+  `CONSOLE_PASSPHRASE` among them and set, per `D-SEC-2` — and a public domain.
+  The passphrase value is chosen by the owner in the Railway dashboard and
+  delivered to the reviewer privately, with the demo link. It is not written
+  into this repository, which is public: not here, not in `README.md`, not in
+  `.env.example`.
 - **Manual checks last.** `V-50`, `V-51` performed against the deployed URL,
   cycling the target once; `V-52 … V-56` per their procedures.
 

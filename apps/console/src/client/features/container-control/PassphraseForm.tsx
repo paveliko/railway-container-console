@@ -6,10 +6,12 @@ import { openSession } from '../../api/client';
 /**
  * Shown when the server answers `401`.
  *
- * `Q-SEC-4` is unsigned, so `CONSOLE_PASSPHRASE` is normally absent and this is
- * never drawn. It exists because the alternative is worse than the ambiguity: a
- * server-side gate with no way to pass it makes the console unusable from a
- * browser, which is a half-built feature rather than a deferred one.
+ * `D-SEC-2` sets `CONSOLE_PASSPHRASE` on the deployed demo, so on the demo this
+ * is the first thing a reviewer sees, not a rarity. It is normally absent in
+ * local development, where there is nothing to protect and this is never drawn.
+ * It was written before that decision, on the reasoning that a server-side gate
+ * with no way to pass it from a browser is a half-built feature rather than a
+ * deferred one.
  */
 export function PassphraseForm({ onOpened }: { onOpened: () => void }) {
   const [value, setValue] = useState('');

@@ -28,7 +28,9 @@ Inside `apps/console` only:
   parent design §9, `runtime = 'nodejs'`, `dynamic = 'force-dynamic'`; errors
   in the `ConsoleError` shape from `@repo/contracts` and nothing else.
 - `POST /api/session` and the cookie check on the two `POST` routes, active
-  only when `CONSOLE_PASSPHRASE` is set (`Q-SEC-4`, default: unset).
+  only when `CONSOLE_PASSPHRASE` is set. The variable stays optional in code,
+  and `D-SEC-2` sets it on the deployed demo, so the gate is on there and
+  normally off in local development.
 - A fake Railway in tests: an in-process `fetch` that replays the experiment's
   recorded frames, so the whole chain from route to derived state runs without
   the network (parent T-6.1) and every failure shape from the research is

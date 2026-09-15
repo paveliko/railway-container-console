@@ -47,5 +47,5 @@ start and stop runs against `test/fake-railway.ts`.
 
 ## The process
 
-- **V-VC-24** `manual` — with `RAILWAY_TOKEN` unset, `start` exits non-zero and the log names the variable. *(`V-55`; `V-CS-2` is blocked on `Q-OPS-5`)*
+- **V-VC-24** `manual` — with `RAILWAY_TOKEN` unset, `start` exits non-zero and the log names the variable. *(`V-55`; `D-OPS-6` settles this against `V-CS-2`, which is reworded to the mapping it tests and is no longer blocked)*
 - **V-VC-25** `manual` — from a clean production install, `start` resolves the workspace sources through their symlinks and honours `PORT`; `SIGTERM` ends every open stream.

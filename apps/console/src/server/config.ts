@@ -2,7 +2,7 @@
  * Where the console's configuration is composed.
  *
  * `@repo/railway-client` answers "which credential, which container" and
- * nothing else — it may not know what a console passphrase is (`Q-SEC-4` is a
+ * nothing else — it may not know what a console passphrase is (`D-SEC-2` is a
  * console concern, and `D-OPS-2` forbids the Railway package from knowing one).
  * So the split is: that package exports `credentialFromEnv` and
  * `targetFromEnv`, and this file — the only reader of `CONSOLE_PASSPHRASE` in
@@ -23,7 +23,7 @@ import {
 export interface Config {
   credential: Credential;
   target: Target;
-  /** When set, the two mutating routes require a session cookie. Q-SEC-4. */
+  /** When set, the two mutating routes require a session cookie. D-SEC-2. */
   passphrase?: string;
 }
 
