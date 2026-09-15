@@ -204,3 +204,53 @@ is where "the owner signs" already lives. **Alternative:** a separate,
 explicitly non-hermetic `check:specs:history` that is not part of `verify` and
 is run in the PR only. **Default if unanswered:** the recommendation — rule 5 is
 listed in `changes/spec-validation/design.md` §7 as not verified.
+
+---
+
+## Registered by `deploy-on-railway`, 2026-09-15
+
+### `Q-OPS-8` — `.railway/railway.ts` for project A, or settings in the dashboard?
+
+*medium · **owner** · open, and it is decided now rather than at the first deploy*
+
+Railway retired the mechanism this change was written against. `[observed]`
+`docs.railway.com/config-as-code`, read 2026-09-15: *"Config as Code is
+deprecated. Prefer Infrastructure as Code (`.railway/railway.ts`)."* and
+**"New services cannot opt into Config as Code."**; existing `railway.json` /
+`railway.toml` files keep working for services already on them until
+**2026-12-01 (hard cutoff)**. Nothing in this repository is on one — there is no
+such file, and the only service the experiment established, `target`, is an
+image created through the API with no repository attached. So the deadline does
+not bind this project, and `railway.json` is not one of the options.
+
+The two that are:
+
+**`.railway/railway.ts`.** Expresses more of design §2 than the deprecated file
+ever could — `source` with `rootDirectory`, `build`, `start`, `preDeploy`,
+`healthcheck`, `replicas`, `env`, `domains`, `volumeMounts` — so the deployment
+becomes reviewable in the repository, which is what every other decision here
+has wanted. It costs a `railway` npm dependency and the Railway CLI, and it is
+**applied by the owner** (`railway config plan` / `apply`), not read on push, so
+it does not remove a manual step so much as move it. `D-OPS-2` and `D-OPS-4`
+have been strict about dependencies; this would be the first one that exists
+only to describe infrastructure. `[to-verify]`: the reference read 2026-09-15
+shows no option for watch paths and none for a restart policy, both of which
+design §2 wants.
+
+**Dashboard settings.** Costs nothing, adds no dependency, and is where the
+variables have to be entered anyway — `D-SEC-2` keeps `CONSOLE_PASSPHRASE` out
+of every file in this public repository. It records nothing: a reviewer reading
+the repository cannot see how the service is built, which is the one thing this
+repository is otherwise good at.
+
+**Recommendation:** dashboard settings for this demo, and say so in the README —
+one service, one deployment, configured once by the person who owns the
+account, against a file that needs a dependency, a CLI and an owner-run apply to
+express four settings and cannot express two of them. **Alternative if the
+deployment is meant to be part of what a reviewer reads:** `.railway/railway.ts`
+with `preserve()` for the passphrase. **Default if unanswered:** the
+recommendation; `T-DR-1.2` records which was used.
+
+Blocks `T-DR-1.2`. `T-DR-1.1` — the reading above, written into
+`changes/deploy-on-railway/design.md` §1 and §2 — is done and does not wait on
+the answer.

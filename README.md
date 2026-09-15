@@ -4,13 +4,20 @@ A small web console that spins one Railway container up and down through
 Railway's public GraphQL API — built for Railway's take-home for the
 *Senior Full-Stack Engineer - Product* role.
 
-**Status:** research and specification are done, and the client layer is built
-and tested against the live API, as one application. The next step is to make
-its layers real packages — a pnpm workspace with Turborepo, specified in
-[`openspec/changes/monorepo-workspace/`](openspec/changes/monorepo-workspace/)
-and waiting on a signature. The screen and the two mutations come after: what
-"spin down" should mean is a decision with consequences, and it is left to a
-person, not an agent — see *Next steps*.
+**Status:** the workspace is done and signed — four packages and one app under
+pnpm and Turborepo (`D-OPS-2`, `D-OPS-3`) — and the console is built: Vite and
+React in the browser, one long-lived Node process serving it and holding the
+poller (`D-UI-5`, `D-OPS-4`). The two verbs, the four routes with SSE and the
+one screen all exist and are tested; `pnpm verify` is green. Two things are
+left, and they are different in kind. **Deployment** has not happened and is the
+owner's: an account usage limit, two Railway services, and a passphrase value
+that never enters this public repository. **Verification** is incomplete: the
+change that wrote the code checked its own criteria and left eleven of the three
+feature changes' criteria unrun — they are listed, one per line, in
+[the parent's `tasks.md`](openspec/changes/railway-container-control/tasks.md)
+under *Ready to start now*, and marked on the criteria themselves. Neither is
+hidden behind the other: the console works, and this says exactly how much of
+that is proven.
 
 ---
 
@@ -53,12 +60,15 @@ Railway dashboard has no Stop button; the API has one. That is the product this
 console is
 ([`…/2026-09-14-railway-customers-and-users.md`](openspec/_research/2026-09-14-railway-customers-and-users.md) §4).
 
-**What the console will be:** one screen; one configured service; a control
-that reads *Start* or *Stop* according to the state Railway actually reports;
-the deployment's status shown while starting; a second press refused
-server-side; a refresh that loses nothing. Next.js as one Node process, holding
-one poller and fanning state out to every browser over SSE. A project token, on
-the server only.
+**What the console is:** one screen; one configured service; a control that
+reads *Start* or *Stop* according to the state Railway actually reports; the
+deployment's status shown while starting; a second press refused server-side; a
+refresh that loses nothing. Vite and React in the browser, served by one
+long-lived `node:http` process that holds one poller and fans state out to every
+browser over SSE — one port in development and in production (`D-UI-5`). The
+Railway socket `D-UI-2` was chosen for is gone: a project token cannot
+subscribe, and a stop never reaches a subscriber (`D-API-7`). A project token,
+on the server only.
 Specified in
 [`design.md`](openspec/changes/railway-container-control/design.md) and
 checkable against 60 criteria in
@@ -73,17 +83,31 @@ Ordered. Nothing below the line starts before the line is crossed.
 
 **Decide (owner only — agents prepare, the owner signs):**
 
-- [ ] **What "down" does.** Four candidates left — `deploymentStop`+`deploymentRestart`
-      (**recommended, verified live**), `deploymentStop`+`deployV2`,
-      `deploymentRemove`+redeploy, `serviceDelete`+`serviceCreate`.
-      `numReplicas: 0` is out: the API rejects it. Consequences tabled in
+- [x] **What "down" does** — answered 2026-09-14, `D-API-5` `ratified`,
+      `Q-API-2` closed 2026-09-15. **Down** = `deploymentStop(latestDeployment.id)`.
+      **Up** = `deploymentRestart(id)` when a stopped deployment exists, else
+      `serviceInstanceDeployV2`. So the service, its configuration and its
+      history all survive a spin-down, and the restart path brings back *the
+      same container*, keeping its deployment id — which is why the screen can
+      honestly say so. The three that lost: `deploymentStop`+`deployV2`,
+      `deploymentRemove`+redeploy, `serviceDelete`+`serviceCreate`;
+      `numReplicas: 0` was dead already, the API rejects it. Consequences
+      tabled in
       [`operations-and-cost.md` §2](openspec/_research/2026-09-14-railway-operations-and-cost.md),
       measured in [the experiment](openspec/_research/2026-09-14-experiment-stop-and-start.md).
-      Close `Q-API-2`.
+      Still open: whether restart revives a deployment stopped for hours rather
+      than ninety seconds (`Q-API-9`).
 - [ ] **Sign or amend** the `proposed` decisions in
-      [`decisions.md`](openspec/decisions.md) — stack (`D-UI-2`), topology
-      (`D-OPS-1`), primary user (`D-UI-4`), polling over subscriptions
-      (`D-API-7`, which supersedes `D-API-1`), and the rest.
+      [`decisions.md`](openspec/decisions.md) — stack (`D-UI-5`, which
+      supersedes `D-UI-2`), Just-in-Time packages under Vite and `tsx`
+      (`D-OPS-4`), topology (`D-OPS-1`), primary user (`D-UI-4`), polling over
+      subscriptions (`D-API-7`, which supersedes `D-API-1`), the design system
+      (`D-UI-6`), the demo gate (`D-SEC-2`), the corpus checker (`D-OPS-5`),
+      fail-fast on a bad environment (`D-OPS-6`), and the rest.
+- [ ] **Answer `Q-OPS-8`** — `.railway/railway.ts` or dashboard settings for the
+      console service. Railway deprecated Config as Code and closed it to new
+      services, so the `railway.json` this repository planned is not an option;
+      the choice is live and nothing is written until it is made.
 - [x] **Demo passphrase or not** — answered 2026-09-15. `D-SEC-2`: the deployed
       demo **is** gated. `CONSOLE_PASSPHRASE` is set on the console service, so
       the two mutating routes (`POST /api/container/up` and `/down`) require a
@@ -123,19 +147,27 @@ what the customers page actually says. Update the `[to-verify]` marks.
       frame recorded. The service is left **stopped**.
 - [ ] **Read the usage page** a day later and close `Q-OPS-2` — is a stopped
       deployment billed? (T-3.5)
-- [ ] **Then build**, one child change at a time, in this order:
-      [`monorepo-workspace`](openspec/changes/monorepo-workspace/) →
+- [x] ~~**Then build**~~ — the order held, and everything but the last step has
+      landed: [`monorepo-workspace`](openspec/changes/monorepo-workspace/) →
       [`container-verbs`](openspec/changes/container-verbs/) →
       [`console-server`](openspec/changes/console-server/) →
       [`console-screen`](openspec/changes/console-screen/) →
       [`deploy-on-railway`](openspec/changes/deploy-on-railway/) → README and
-      walkthrough. The parent's
+      walkthrough. The three middle changes were written in one pass by
+      [`vite-console`](openspec/changes/vite-console/), which replaced Next.js
+      with Vite on the way through. The parent's
       [`tasks.md`](openspec/changes/railway-container-control/tasks.md) is the
       index of what moved where.
+- [ ] **Close the verification gaps.** Eleven criteria across the three feature
+      changes have no run — `vite-console` verified its own and did not pick
+      these up. They need nobody's signature and are listed individually under
+      *Ready to start now* in the parent's `tasks.md`.
 
-The workspace itself is no longer waiting: `D-OPS-2` and `D-OPS-3` are signed
-and the move has landed. What still waits on a signature is the product —
-`Q-API-2` decides what *spin down* does, and no verb is written before it.
+Nothing is waiting on a signature to be *written* any more: `D-OPS-2` /
+`D-OPS-3` are signed, `Q-API-2` and `Q-SEC-4` are closed, and the code is
+there. What waits on the owner is deployment — the usage limit, the two
+services, the passphrase value, and `Q-OPS-8` — and the batch of `proposed`
+decisions the whole thing now rests on.
 
 ---
 
@@ -146,7 +178,7 @@ packages, one permitted direction of dependency.
 
 ```
 apps/
-└── console/           @repo/console         Next.js — the only thing that ships
+└── console/           @repo/console         Vite + one Node process — the only thing that ships
 packages/
 ├── contracts/         @repo/contracts       Zod schemas + the types inferred from them
 ├── container-core/    @repo/container-core  state, poller, the ContainerProvider port
@@ -178,13 +210,13 @@ openspec/
 ├── changes/
 │   ├── railway-container-control/   the parent: proposal, design, 60 criteria (V-N), tasks as an index
 │   ├── monorepo-workspace/          the workspace above — signed, implemented
-│   ├── container-verbs/             up() / down() — blocked on Q-API-2
-│   ├── console-server/              runtime, four routes, SSE, fake Railway
-│   ├── console-screen/              the one screen
+│   ├── container-verbs/             up() / down() — built; Q-API-2 closed
+│   ├── console-server/              runtime, four routes, SSE, fake Railway — built
+│   ├── console-screen/              the one screen — built
 │   ├── design-system/               DESIGN.md as the single source for every token
 │   ├── designmd-conformance/        that file, in the published format
 │   ├── vite-console/                Next.js out, Vite and one long-lived process in
-│   ├── deploy-on-railway/           the workspace on Railway, manual checks
+│   ├── deploy-on-railway/           the workspace on Railway, manual checks — the last step
 │   └── spec-validation/             this corpus, checked by a script rather than by prose
 ├── current/           what the console *is* — empty until the change is implemented and archived
 ├── decisions.md       D-<CAP>-N, each with its rejected alternatives; proposed until the owner signs
@@ -218,9 +250,10 @@ want one on its own:
 pnpm check        # the operations gate, the boundary rules, the two design
                   # checks, and the specification corpus
 pnpm typecheck    # one tsc per package: pnpm proves the graph, tsc proves the code
-pnpm test         # 90 tests across five packages
-pnpm build        # runs the operations gate first, then next build
-pnpm dev          # Next.js at apps/console, packages picked up from source
+pnpm test         # 164 tests across the four packages and the app
+pnpm build        # runs the operations gate first, then vite build
+pnpm dev          # one process at apps/console — Vite in middleware mode,
+                  # packages picked up from source through tsx
 ```
 
 The one test that would talk to Railway is a separate, uncached task, kept out
@@ -230,10 +263,11 @@ of `verify` so that it can only run when asked for by name:
 pnpm test:live    # skips itself unless .env.local has the five RAILWAY_* variables
 ```
 
-The screen is still a placeholder — it needs the two verbs, which need
-`Q-API-2`. To point the client layer at a real container, copy `.env.example`
-to `.env.local` at the repository root and fill in the five `RAILWAY_*`
-variables. The token never leaves the server and never enters this repository.
+The screen is built — `pnpm dev` serves it, and `apps/console/test/dev-server.ts`
+drives it against a fake Railway with no token at all. To point it at a real
+container instead, copy `.env.example` to `.env.local` at the repository root
+and fill in the five `RAILWAY_*` variables. The token never leaves the server
+and never enters this repository.
 
 ---
 
