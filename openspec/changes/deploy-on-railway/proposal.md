@@ -19,11 +19,15 @@ and runs that is `Q-OPS-3`, `[to-verify]` until the first deploy.
 
 ## The approach
 
-- **Config as code.** A `railway.json` at the repository root (or the
-  console's service settings, if the file cannot express it — `[to-verify]`)
-  with the build command `pnpm turbo run build --filter=@repo/console`, the
-  start command `pnpm --filter @repo/console start`, and watch paths
-  `apps/console/**`, `packages/**`, `pnpm-lock.yaml`, `turbo.json`.
+- **Configuration.** The build command `pnpm turbo run build
+  --filter=@repo/console`, the start command `pnpm --filter @repo/console
+  start`, watch paths `apps/console/**`, `packages/**`, `pnpm-lock.yaml`,
+  `turbo.json`, `package.json`, and restart on failure — reaching the console
+  service by whichever mechanism `Q-OPS-8` picks. **Revised 2026-09-15:** this
+  bullet said "a `railway.json` at the repository root". Railway deprecated
+  Config as Code and closed it to new services; the live choice is
+  `.railway/railway.ts` against dashboard settings, and design §1 records the
+  readings. No configuration file is written by this change.
 - **Target first.** The experiment's service `target` (`nginx:alpine`, left
   stopped) becomes project B's target, or a fresh one is created — owner's
   choice; serverless off, one replica, restart on failure.
@@ -46,4 +50,4 @@ and runs that is `Q-OPS-3`, `[to-verify]` until the first deploy.
 ## What "done" means
 
 Parent `V-50 … V-56` pass; [`verification.md`](verification.md) `V-DR-N`
-pass; `Q-OPS-3` closed with what was observed.
+pass; `Q-OPS-3` closed with what was observed, and `Q-OPS-8` answered.
